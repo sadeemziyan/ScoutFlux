@@ -5,18 +5,19 @@ from urllib.robotparser import RobotFileParser
 
 import requests
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 logger = logging.getLogger(__name__)
 
 USER_AGENT = "ScoutFluxBot/1.0 (+https://github.com/sadeemziyan/ScoutFlux)"
 REQUEST_TIMEOUT_SECONDS = 10
 DELAY_BETWEEN_REQUESTS_SECONDS = 2
+RENDERING_COMPARISON_THRESHOLD = 1.2  # Selenium must exceed static length by this factor to flip a domain's strategy
 
-# Cached per-domain: robots.txt is identical for every page on a
-# domain, so we fetch it once and reuse it across all URLs on that
-# same domain instead of hitting the network again each time.
-# Stores (parsed RobotFileParser, raw text) - both None if unreachable.
 _robots_cache: dict[str, tuple[RobotFileParser | None, str | None]] = {}
+_rendering_strategy_cache: dict[str, str] = {}  # domain -> "static" or "selenium"
+_selenium_driver_cache: dict[str, webdriver.Chrome] = {}  # domain -> open driver, reused across that domain's pages
 
 
 def _load_robots(domain: str) -> tuple[RobotFileParser | None, str | None]:
@@ -50,7 +51,7 @@ def _load_robots(domain: str) -> tuple[RobotFileParser | None, str | None]:
     if response.status_code == 404:
         logger.info(f"No robots.txt at {domain} (404) - treating as unrestricted")
         parser = RobotFileParser()
-        parser.parse([])  # empty ruleset - can_fetch() defaults to True
+        parser.parse([])
         _robots_cache[domain] = (parser, "")
         return _robots_cache[domain]
 
@@ -94,15 +95,11 @@ def ai_input_disallowed(url: str) -> bool:
     out of `ai-input` (feeding its content into an AI model), which is
     exactly what our analyzer agent does with scraped text.
 
-    This is separate from is_scraping_allowed(): a page can be fully
-    permitted to fetch under traditional Disallow/Allow rules while
-    still explicitly opting out of this specific downstream use.
-    Python's built-in RobotFileParser doesn't recognize this newer
-    directive, so we scan the raw text for it ourselves.
-
-    If robots.txt couldn't be read at all, that's not treated as an
-    ai-input opt-out here - is_scraping_allowed() already fails closed
-    on that same underlying fetch failure.
+    Separate from is_scraping_allowed(): a page can be fully permitted
+    to fetch under traditional Disallow/Allow rules while still
+    explicitly opting out of this specific downstream use. Python's
+    built-in RobotFileParser doesn't recognize this newer directive,
+    so we scan the raw text for it ourselves.
     """
     parsed = urlparse(url)
     domain = f"{parsed.scheme}://{parsed.netloc}"
@@ -153,6 +150,107 @@ def looks_like_gated_content(response: requests.Response) -> bool:
     return False
 
 
+def _build_chrome_options() -> Options:
+    """
+    Headless Chrome config for WSL2: no display server available,
+    sandboxing disabled (acceptable for local dev against known,
+    trusted competitor sites - would need reconsidering for untrusted
+    input), and disk-based temp storage since /dev/shm is often too
+    small in WSL2/containerized environments.
+    """
+    options = Options()
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument(f"--user-agent={USER_AGENT}")
+    return options
+
+
+def _get_selenium_driver(domain: str) -> webdriver.Chrome:
+    """
+    Returns the open Chrome driver for a domain, creating one if this
+    is the first time this domain needs Selenium. Reusing one driver
+    across a domain's pages avoids paying full browser launch/teardown
+    cost on every single page.
+    """
+    if domain not in _selenium_driver_cache:
+        driver = webdriver.Chrome(options=_build_chrome_options())
+        driver.set_page_load_timeout(REQUEST_TIMEOUT_SECONDS)
+        _selenium_driver_cache[domain] = driver
+
+    return _selenium_driver_cache[domain]
+
+
+def _close_selenium_driver(domain: str) -> None:
+    """Quits and evicts a single domain's driver, if one is open."""
+    driver = _selenium_driver_cache.pop(domain, None)
+    if driver is not None:
+        driver.quit()
+
+
+def close_all_selenium_drivers() -> None:
+    """
+    Quits every open Selenium driver and clears the cache. Must be
+    called once, by whoever orchestrates a scrape run, after that run
+    finishes - drivers persist across scrape_url() calls for reuse, so
+    nothing closes them automatically otherwise.
+    """
+    for domain in list(_selenium_driver_cache.keys()):
+        _close_selenium_driver(domain)
+
+
+def fetch_with_selenium(driver: webdriver.Chrome, url: str) -> str | None:
+    """
+    Loads a URL in an already-open Chrome driver and returns its
+    rendered text. Driver lifecycle (creation/teardown) is the
+    caller's responsibility - this function only navigates and
+    extracts.
+    """
+    try:
+        driver.get(url)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        return soup.get_text(separator=" ", strip=True)
+    except Exception as e:
+        logger.warning(f"Selenium fetch failed for {url}: {e}")
+        return None
+
+
+def _determine_rendering_strategy(domain: str, sample_url: str, static_text: str) -> tuple[str, str | None]:
+    """
+    Decides, once per domain, whether pages here need Selenium by
+    directly comparing static vs. rendered content on one sample page
+    - rather than guessing from a fixed length threshold, which can't
+    tell "enough real content" apart from "some content, but more is
+    loaded dynamically and missing."
+
+    Returns (strategy, selenium_text_if_fetched) - the second value
+    lets the caller reuse the Selenium fetch that happened during this
+    comparison, instead of fetching the same page twice.
+
+    Known limitation: assumes a domain's pages are consistently built
+    (all JS-rendered or all server-rendered). A site mixing both - e.g.
+    a static blog alongside a JS-heavy embedded job board - could be
+    misclassified based on whichever page is scraped first. Accepted
+    tradeoff for this project's scale; a page-level check would remove
+    this risk at the cost of Selenium overhead on every page.
+    """
+    if domain in _rendering_strategy_cache:
+        return _rendering_strategy_cache[domain], None
+
+    driver = _get_selenium_driver(domain)
+    selenium_text = fetch_with_selenium(driver, sample_url)
+
+    if selenium_text and len(selenium_text) > len(static_text) * RENDERING_COMPARISON_THRESHOLD:
+        logger.info(f"{domain}: Selenium found meaningfully more content, using it going forward")
+        strategy = "selenium"
+    else:
+        strategy = "static"
+        _close_selenium_driver(domain)  # only needed for this comparison — won't be reused
+
+    _rendering_strategy_cache[domain] = strategy
+    return strategy, selenium_text
+
+
 def scrape_url(url: str) -> str | None:
     """
     Full safety-checked scrape of a single URL.
@@ -171,9 +269,6 @@ def scrape_url(url: str) -> str | None:
     if response is None:
         return None
 
-    # A real request just went out over the network, regardless of
-    # what we do with the response - so the politeness delay belongs
-    # here, applying to failed/gated pages too, not just successes.
     time.sleep(DELAY_BETWEEN_REQUESTS_SECONDS)
 
     if not response.ok:
@@ -185,4 +280,16 @@ def scrape_url(url: str) -> str | None:
         return None
 
     soup = BeautifulSoup(response.text, "html.parser")
-    return soup.get_text(separator=" ", strip=True)
+    text = soup.get_text(separator=" ", strip=True)
+
+    domain = f"{urlparse(url).scheme}://{urlparse(url).netloc}"
+    strategy, selenium_text = _determine_rendering_strategy(domain, url, text)
+
+    if strategy == "selenium":
+        if selenium_text is None:  # cached strategy from an earlier page — this page needs its own fetch
+            driver = _get_selenium_driver(domain)
+            selenium_text = fetch_with_selenium(driver, url)
+        if selenium_text:
+            return selenium_text
+
+    return text
