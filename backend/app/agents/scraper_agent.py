@@ -8,6 +8,9 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
+from selenium.webdriver.common.by import By
+
+
 logger = logging.getLogger(__name__)
 
 USER_AGENT = "ScoutFluxBot/1.0 (+https://github.com/sadeemziyan/ScoutFlux)"
@@ -18,6 +21,19 @@ RENDERING_COMPARISON_THRESHOLD = 1.2  # Selenium must exceed static length by th
 _robots_cache: dict[str, tuple[RobotFileParser | None, str | None]] = {}
 _rendering_strategy_cache: dict[str, str] = {}  # domain -> "static" or "selenium"
 _selenium_driver_cache: dict[str, webdriver.Chrome] = {}  # domain -> open driver, reused across that domain's pages
+
+# Patterns that commonly indicate a clickable "reveal more content" widget.
+# Deliberately narrow and passive-only - we never touch elements that could
+# submit a form, navigate away, or trigger a real site action (buttons with
+# type=submit, anchor tags with real hrefs, etc.).
+EXPANDABLE_SELECTORS = [
+    "summary",  # native <details><summary> disclosure widget
+    "[aria-expanded='false']",  # accessibility markup for collapsed content
+    "[class*='accordion']",
+    "[class*='faq']",
+    "[class*='collapse-trigger']",
+    "[class*='dropdown-toggle']",
+]
 
 
 def _load_robots(domain: str) -> tuple[RobotFileParser | None, str | None]:
@@ -199,15 +215,49 @@ def close_all_selenium_drivers() -> None:
         _close_selenium_driver(domain)
 
 
+def _expand_collapsible_content(driver: webdriver.Chrome) -> int:
+    """
+    Best-effort attempt to reveal accordion/FAQ-style hidden content by
+    clicking elements matching common "this is expandable" patterns.
+
+    This is a heuristic, not a guarantee - it only catches sites built
+    with these common conventions, and deliberately avoids anything
+    that could submit a form or navigate away (real buttons, real
+    links), since this scraper should only ever passively read pages,
+    never take real actions on a competitor's site.
+
+    Returns the number of elements successfully clicked, for logging.
+    """
+    clicked_count = 0
+
+    for selector in EXPANDABLE_SELECTORS:
+        elements = driver.find_elements(By.CSS_SELECTOR, selector)
+        for element in elements:
+            try:
+                if element.is_displayed() and element.is_enabled():
+                    element.click()
+                    clicked_count += 1
+            except Exception:
+                # An individual element failing to click (obscured by
+                # an overlay, already removed from DOM, etc.) shouldn't
+                # stop us from trying the rest.
+                continue
+
+    return clicked_count
+
 def fetch_with_selenium(driver: webdriver.Chrome, url: str) -> str | None:
     """
-    Loads a URL in an already-open Chrome driver and returns its
-    rendered text. Driver lifecycle (creation/teardown) is the
-    caller's responsibility - this function only navigates and
-    extracts.
+    Loads a URL in an already-open Chrome driver, makes a best-effort
+    attempt to expand common accordion/FAQ-style hidden content, and
+    returns the resulting rendered text.
     """
     try:
         driver.get(url)
+
+        clicked = _expand_collapsible_content(driver)
+        if clicked:
+            logger.info(f"{url}: expanded {clicked} collapsible element(s)")
+
         soup = BeautifulSoup(driver.page_source, "html.parser")
         return soup.get_text(separator=" ", strip=True)
     except Exception as e:
