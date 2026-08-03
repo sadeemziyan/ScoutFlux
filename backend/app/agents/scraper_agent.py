@@ -245,7 +245,7 @@ def _determine_rendering_strategy(domain: str, sample_url: str, static_text: str
         strategy = "selenium"
     else:
         strategy = "static"
-        _close_selenium_driver(domain)  # only needed for this comparison — won't be reused
+        _close_selenium_driver(domain)  # only needed for this comparison; won't be reused
 
     _rendering_strategy_cache[domain] = strategy
     return strategy, selenium_text
@@ -286,7 +286,7 @@ def scrape_url(url: str) -> str | None:
     strategy, selenium_text = _determine_rendering_strategy(domain, url, text)
 
     if strategy == "selenium":
-        if selenium_text is None:  # cached strategy from an earlier page — this page needs its own fetch
+        if selenium_text is None:  # cached strategy from an earlier page - this page needs its own fetch
             driver = _get_selenium_driver(domain)
             selenium_text = fetch_with_selenium(driver, url)
         if selenium_text:
