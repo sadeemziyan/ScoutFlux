@@ -268,21 +268,26 @@ def fetch_with_selenium(driver: webdriver.Chrome, url: str) -> str | None:
 def _determine_rendering_strategy(domain: str, sample_url: str, static_text: str) -> tuple[str, str | None]:
     """
     Decides, once per domain, whether pages here need Selenium by
-    directly comparing static vs. rendered content on one sample page
-    - rather than guessing from a fixed length threshold, which can't
+    directly comparing static vs. rendered content on one sample page,
+    rather than guessing from a fixed length threshold, which can't
     tell "enough real content" apart from "some content, but more is
     loaded dynamically and missing."
 
-    Returns (strategy, selenium_text_if_fetched) - the second value
+    Returns (strategy, selenium_text_if_fetched). The second value
     lets the caller reuse the Selenium fetch that happened during this
     comparison, instead of fetching the same page twice.
 
-    Known limitation: assumes a domain's pages are consistently built
-    (all JS-rendered or all server-rendered). A site mixing both - e.g.
-    a static blog alongside a JS-heavy embedded job board - could be
-    misclassified based on whichever page is scraped first. Accepted
-    tradeoff for this project's scale; a page-level check would remove
-    this risk at the cost of Selenium overhead on every page.
+    Known limitation, confirmed with a real test case (not just
+    theoretical): this assumes a domain's pages are consistently
+    built. quotes.toscrape.com and quotes.toscrape.com/js share a
+    domain but render completely differently (one static, one
+    JS-only). When the static page was scraped first, the whole
+    domain got cached as "static," and the /js page was later served
+    from that same cached verdict, missing content it actually needed
+    Selenium for. A real competitor site mixing a static blog with a
+    JS-heavy embedded job board could hit this same gap. Accepted
+    tradeoff for this project's scale; a per-page check would remove
+    the risk at the cost of Selenium overhead on every page.
     """
     if domain in _rendering_strategy_cache:
         return _rendering_strategy_cache[domain], None
