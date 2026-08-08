@@ -5,6 +5,7 @@ from app.db.database import get_db
 from app.models.briefing import Briefing
 from app.schemas.company import CompanyTrackingRequest
 from app.schemas.briefing import BriefingResponse
+from app.agents.pipeline import run_pipeline
 
 app = FastAPI(title="ScoutFlux API")
 
@@ -15,18 +16,13 @@ def health_check():
     return {"status": "ok"}
 
 
-@app.post("/companies/track")
-def track_company(request: CompanyTrackingRequest):
+@app.post("/companies/track", response_model=list[BriefingResponse])
+def track_company(request: CompanyTrackingRequest, db: Session = Depends(get_db)):
     """
-    Accepts a company + list of competitors to monitor.
-    For now, just validates and echoes the input back — the actual
-    agent pipeline trigger gets wired in once the agents exist (Step 7+).
+    Runs the full scrape/analyze/synthesize pipeline for every
+    competitor in the request and returns the saved briefings.
     """
-    return {
-        "message": f"Tracking set up for {request.user_company}",
-        "competitors_count": len(request.competitors),
-        "competitors": request.competitors,
-    }
+    return run_pipeline(request, db)
 
 
 @app.get("/briefings", response_model=list[BriefingResponse])

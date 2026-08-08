@@ -1,8 +1,10 @@
 from typing import TypedDict
+import time
 
 from langgraph.graph import StateGraph, END
 
-import time
+from sqlalchemy.orm import Session
+from app.models.briefing import Briefing
 
 from app.agents.scraper_agent import scrape_url, close_all_selenium_drivers
 from app.agents.analyzer_agent import analyze_page
@@ -68,17 +70,29 @@ def build_pipeline_graph():
     graph.add_edge("synthesize", END)
     return graph.compile()
 
+def _save_briefing(db: Session, user_company: str, competitor: "CompetitorInput", content: BriefingContent) -> Briefing:
+    """Persists one competitor's synthesized briefing as a new row."""
+    briefing = Briefing(
+        user_company=user_company,
+        competitor_name=competitor.name,
+        competitor_urls=[str(u) for u in competitor.urls],
+        product_updates=content.product_updates,
+        hiring_signals=content.hiring_signals,
+        pricing_changes=content.pricing_changes,
+        tech_stack_changes=content.tech_stack_changes,
+    )
+    db.add(briefing)
+    db.commit()
+    db.refresh(briefing)
+    return briefing
 
-def run_pipeline(request: CompanyTrackingRequest) -> dict[str, BriefingContent]:
+def run_pipeline(request: CompanyTrackingRequest, db: Session) -> list[Briefing]:
     """
-    Runs the full pipeline for every competitor in the request.
-    Returns a dict mapping competitor name to its final BriefingContent.
-    Selenium drivers are closed once at the end of the whole run, not
-    per competitor, since a driver may be reused across a competitor's
-    own pages within a single graph run.
+    Runs the full pipeline for every competitor in the request and
+    saves each result as a Briefing row. Returns the saved rows.
     """
     graph = build_pipeline_graph()
-    results = {}
+    saved_briefings = []
 
     try:
         for competitor in request.competitors:
@@ -90,8 +104,9 @@ def run_pipeline(request: CompanyTrackingRequest) -> dict[str, BriefingContent]:
                 "briefing": None,
             }
             final_state = graph.invoke(initial_state)
-            results[competitor.name] = final_state["briefing"]
+            saved = _save_briefing(db, request.user_company, competitor, final_state["briefing"])
+            saved_briefings.append(saved)
     finally:
         close_all_selenium_drivers()
 
-    return results
+    return saved_briefings
