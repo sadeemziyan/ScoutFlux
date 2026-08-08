@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import ARRAY
 
 from app.db.database import Base
 
@@ -19,8 +20,8 @@ class Briefing(Base):
     # Whose competitor intelligence this is for, and which competitor
     user_company = Column(String, nullable=False, index=True)
     competitor_name = Column(String, nullable=False, index=True)
-    competitor_url = Column(String, nullable=False)
-
+    competitor_urls = Column(ARRAY(String), nullable=False)
+    
     # The four report categories from the spec — stored as text for now.
     # Each will hold AI-generated summary text (or JSON-as-text later
     # if we want more structure per category).

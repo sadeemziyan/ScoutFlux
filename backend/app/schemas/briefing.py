@@ -9,7 +9,7 @@ class BriefingResponse(BaseModel):
     id: int
     user_company: str
     competitor_name: str
-    competitor_url: str
+    competitor_urls: list[str]
     product_updates: str | None
     hiring_signals: str | None
     pricing_changes: str | None
