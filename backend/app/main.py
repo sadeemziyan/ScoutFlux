@@ -17,7 +17,7 @@ app = FastAPI(title="ScoutFlux API")
 
 @app.get("/health")
 def health_check():
-    """Basic liveness check — confirms the server is up and responding."""
+    """Basic liveness check - confirms the server is up and responding."""
     return {"status": "ok"}
 
 
