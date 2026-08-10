@@ -7,6 +7,11 @@ from app.schemas.company import CompanyTrackingRequest
 from app.schemas.briefing import BriefingResponse
 from app.agents.pipeline import run_pipeline
 
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+
+
 app = FastAPI(title="ScoutFlux API")
 
 

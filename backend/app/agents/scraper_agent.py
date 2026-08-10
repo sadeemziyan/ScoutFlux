@@ -266,7 +266,7 @@ def fetch_with_selenium(driver: webdriver.Chrome, url: str) -> str | None:
 
 
 def _determine_rendering_strategy(domain: str, sample_url: str, static_text: str) -> tuple[str, str | None]:
-    """
+       """
     Decides, once per domain, whether pages here need Selenium by
     directly comparing static vs. rendered content on one sample page,
     rather than guessing from a fixed length threshold, which can't
@@ -276,6 +276,12 @@ def _determine_rendering_strategy(domain: str, sample_url: str, static_text: str
     Returns (strategy, selenium_text_if_fetched). The second value
     lets the caller reuse the Selenium fetch that happened during this
     comparison, instead of fetching the same page twice.
+
+    Note: the trial Selenium fetch also runs click-expansion on
+    accordion/FAQ-style content. If the domain still resolves to
+    "static" (Selenium's result wasn't meaningfully longer), that
+    expanded content is discarded along with the rest of the trial
+    fetch, and the caller falls back to the plain static text.
 
     Known limitation, confirmed with a real test case (not just
     theoretical): this assumes a domain's pages are consistently
