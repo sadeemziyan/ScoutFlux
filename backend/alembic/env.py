@@ -5,7 +5,8 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.db.database import Base
 from app.core.config import settings
-from app.models.briefing import Briefing 
+from app.models.briefing import Briefing  # noqa: F401 — import registers the model with Base
+from app.models.user import User  # noqa: F401 — import registers the model with Base
 
 from logging.config import fileConfig
 

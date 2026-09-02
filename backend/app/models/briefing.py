@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import ARRAY
 
@@ -16,6 +16,7 @@ class Briefing(Base):
     __tablename__ = "briefings"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     # Whose competitor intelligence this is for, and which competitor
     user_company = Column(String, nullable=False, index=True)
