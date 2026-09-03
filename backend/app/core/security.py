@@ -19,34 +19,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours, since there is no refresh tok
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    """
-    Extracts and verifies the request's token, then looks up and
-    returns the User it belongs to. Raises 401 if the token is
-    missing, invalid, expired, or refers to a user that no longer
-    exists.
-    """
-    user_id = decode_access_token(token)
-
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-        )
-
-    user = db.query(User).filter(User.id == user_id).first()
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User no longer exists",
-        )
-
-    return user
-
 def hash_password(plain_password: str) -> str:
     """Hashes a plain-text password for storage. Never store plain_password anywhere."""
     return password_hash.hash(plain_password)
@@ -81,3 +53,31 @@ def decode_access_token(token: str) -> int | None:
         return int(payload["sub"])
     except jwt.PyJWTError:
         return None
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    """
+    Extracts and verifies the request's token, then looks up and
+    returns the User it belongs to. Raises 401 if the token is
+    missing, invalid, expired, or refers to a user that no longer
+    exists.
+    """
+    user_id = decode_access_token(token)
+
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User no longer exists",
+        )
+
+    return user
