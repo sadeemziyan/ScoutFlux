@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react'
 import BriefingCard from './BriefingCard'
+import { apiFetch } from '../api'
 
-function Dashboard() {
+function Dashboard({ token, onUnauthorized }) {
   const [briefings, setBriefings] = useState([])
-  const [status, setStatus] = useState('loading') // loading | success | error
+  const [status, setStatus] = useState('loading')
 
   useEffect(() => {
     async function fetchBriefings() {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/briefings`)
+        const response = await apiFetch('/briefings', token)
+
+        if (response.status === 401) {
+          onUnauthorized()
+          return
+        }
         if (!response.ok) throw new Error(`Server responded with ${response.status}`)
+
         const data = await response.json()
         setBriefings(data)
         setStatus('success')
@@ -19,7 +26,7 @@ function Dashboard() {
     }
 
     fetchBriefings()
-  }, [])
+  }, [token])
 
   if (status === 'loading') return <p className="text-center text-gray-500 p-6">Loading briefings...</p>
   if (status === 'error') return <p className="text-center text-red-600 p-6">Failed to load briefings.</p>
