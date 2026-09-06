@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AuthForm from './components/AuthForm'
 import CompanyForm from './components/CompanyForm'
 import Dashboard from './components/Dashboard'
@@ -6,6 +6,7 @@ import { apiFetch } from './api'
 
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token'))
+  const [userEmail, setUserEmail] = useState(null)
   const [view, setView] = useState('form')
   const [submitStatus, setSubmitStatus] = useState('idle')
   const [errorMessage, setErrorMessage] = useState('')
@@ -19,6 +20,25 @@ function App() {
     localStorage.removeItem('token')
     setToken(null)
   }
+
+    useEffect(() => {
+    if (!token) {
+      setUserEmail(null)
+      return
+    }
+
+    async function fetchMe() {
+      const response = await apiFetch('/auth/me', token)
+      if (response.status === 401) {
+        handleLogout()
+        return
+      }
+      const data = await response.json()
+      setUserEmail(data.email)
+    }
+
+    fetchMe()
+  }, [token])
 
   async function handleSubmit(payload) {
     setSubmitStatus('loading')
@@ -59,7 +79,10 @@ function App() {
           <button onClick={() => setView('dashboard')} className={`text-sm font-medium ${view === 'dashboard' ? 'text-blue-600' : 'text-gray-500'}`}>
             Dashboard
           </button>
-          <button onClick={handleLogout} className="text-sm font-medium text-gray-500 ml-auto">
+          {userEmail && (
+            <span className="text-sm text-gray-500 ml-auto">Welcome, {userEmail}</span>
+          )}
+          <button onClick={handleLogout} className="text-sm font-medium text-gray-500">
             Log out
           </button>
         </div>

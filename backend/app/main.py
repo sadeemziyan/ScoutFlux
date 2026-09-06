@@ -7,7 +7,7 @@ from app.models.briefing import Briefing
 from app.models.user import User
 from app.schemas.company import CompanyTrackingRequest
 from app.schemas.briefing import BriefingResponse
-from app.schemas.auth import UserSignup, UserLogin, TokenResponse
+from app.schemas.auth import UserSignup, UserLogin, TokenResponse, UserResponse
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
 from app.agents.pipeline import run_pipeline
 
@@ -56,6 +56,11 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
 
     token = create_access_token(user_id=user.id)
     return TokenResponse(access_token=token)
+
+@app.get("/auth/me", response_model=UserResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    """Returns the currently authenticated user's basic info."""
+    return current_user
 
 @app.post("/companies/track", response_model=list[BriefingResponse])
 def track_company(
