@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.briefing import Briefing
 from app.models.user import User
+from app.models.tracked_competitor import TrackedCompetitor
+from app.schemas.tracked_competitor import TrackedCompetitorResponse
 from app.schemas.company import CompanyTrackingRequest
 from app.schemas.briefing import BriefingResponse
 from app.schemas.auth import UserSignup, UserLogin, TokenResponse, UserResponse
@@ -82,3 +84,35 @@ def list_briefings(
 ):
     """Returns briefings belonging to the current user only."""
     return db.query(Briefing).filter(Briefing.user_id == current_user.id).all()
+
+@app.get("/tracked-competitors", response_model=list[TrackedCompetitorResponse])
+def list_tracked_competitors(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Returns the current user's ongoing tracked competitors."""
+    return db.query(TrackedCompetitor).filter(TrackedCompetitor.user_id == current_user.id).all()
+
+
+@app.delete("/tracked-competitors/{tracked_id}", status_code=204)
+def delete_tracked_competitor(
+    tracked_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Removes a tracked competitor. Filters by id AND user_id together,
+    not just id, so a user can never delete another user's tracked
+    competitor by guessing or incrementing ids.
+    """
+    tracked = (
+        db.query(TrackedCompetitor)
+        .filter(TrackedCompetitor.id == tracked_id, TrackedCompetitor.user_id == current_user.id)
+        .first()
+    )
+
+    if tracked is None:
+        raise HTTPException(status_code=404, detail="Tracked competitor not found")
+
+    db.delete(tracked)
+    db.commit()

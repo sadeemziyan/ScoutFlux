@@ -7,6 +7,7 @@ from app.db.database import Base
 from app.core.config import settings
 from app.models.briefing import Briefing  # noqa: F401 — import registers the model with Base
 from app.models.user import User  # noqa: F401 — import registers the model with Base
+from app.models.tracked_competitor import TrackedCompetitor  # noqa: F401 — import registers the model with Base
 
 from logging.config import fileConfig
 
