@@ -1,6 +1,0 @@
- id | user_id | user_company  | competitor_name |                         competitor_urls                         |          created_at           
-----+---------+---------------+-----------------+-----------------------------------------------------------------+-------------------------------
-  1 |       3 | Test2 Company | Notion          | {https://www.notion.com/pricing,https://www.notion.com/careers} | 2026-09-06 07:05:22.410506+03
-  2 |       3 | Test2 Company | Craft           | {https://www.craft.do/pricing,https://www.craft.do/careers}     | 2026-09-06 07:09:19.221528+03
-(2 rows)
-

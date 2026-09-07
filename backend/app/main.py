@@ -13,12 +13,36 @@ from app.schemas.auth import UserSignup, UserLogin, TokenResponse, UserResponse
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
 from app.agents.pipeline import run_pipeline
 
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+from app.scheduler.jobs import run_weekly_pipeline_for_all_users
+scheduler = BackgroundScheduler()
+
 import logging
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 
-app = FastAPI(title="ScoutFlux API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Runs once, when the app starts up
+    scheduler.add_job(
+        run_weekly_pipeline_for_all_users,
+        trigger=CronTrigger(day_of_week="sun", hour=0, minute=0),
+        id="weekly_pipeline",
+        replace_existing=True,
+    )
+    scheduler.start()
+    logger.info("Scheduler started")
+
+    yield  # the app runs here, handling requests, until it's told to shut down
+
+    # Runs once, when the app shuts down
+    scheduler.shutdown()
+    logger.info("Scheduler shut down")
+
+app = FastAPI(title="ScoutFlux API", lifespan = lifespan)
 
 app.add_middleware(
     CORSMiddleware,

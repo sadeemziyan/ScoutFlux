@@ -14,6 +14,7 @@ from app.agents.report_writer_agent import write_briefing, PageSignals, Briefing
 from app.schemas.company import CompanyTrackingRequest
 
 ANALYZER_CALL_DELAY_SECONDS = 4
+GEMINI_CALL_DELAY_SECONDS = 4  # both analyzer and report writer now share gemini-3.5-flash-lite's 15 RPM limit, so every Gemini call in the pipeline needs pacing, not just the analyzer's
 
 class PipelineState(TypedDict):
     """
@@ -49,7 +50,7 @@ def analyze_node(state: PipelineState) -> dict:
     for page in state["scraped_pages"]:
         signals = analyze_page(state["competitor_name"], page["url"], page["text"])
         page_signals.append(PageSignals(url=page["url"], signals=signals))
-        time.sleep(ANALYZER_CALL_DELAY_SECONDS)
+        time.sleep(GEMINI_CALL_DELAY_SECONDS)
 
     return {"page_signals": page_signals}
 
@@ -57,6 +58,7 @@ def analyze_node(state: PipelineState) -> dict:
 def synthesize_node(state: PipelineState) -> dict:
     """Runs the report writer agent to combine all page signals into one briefing."""
     briefing = write_briefing(state["competitor_name"], state["page_signals"])
+    time.sleep(GEMINI_CALL_DELAY_SECONDS)
     return {"briefing": briefing}
 
 
