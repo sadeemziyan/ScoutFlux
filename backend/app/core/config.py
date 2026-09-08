@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     crashing later inside some unrelated function.
     """
 
-    database_url: str
+    database_url: str          # pooled — used by the running app
+    database_url_direct: str   # direct — used only by Alembic migrations
     gemini_api_key: str
     jwt_secret_key: str
 
