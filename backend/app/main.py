@@ -5,18 +5,44 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.briefing import Briefing
 from app.models.user import User
+from app.models.tracked_competitor import TrackedCompetitor
+from app.schemas.tracked_competitor import TrackedCompetitorResponse
 from app.schemas.company import CompanyTrackingRequest
 from app.schemas.briefing import BriefingResponse
 from app.schemas.auth import UserSignup, UserLogin, TokenResponse, UserResponse
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
 from app.agents.pipeline import run_pipeline
 
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+from app.scheduler.jobs import run_weekly_pipeline_for_all_users
+scheduler = BackgroundScheduler()
+
 import logging
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 
-app = FastAPI(title="ScoutFlux API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Runs once, when the app starts up
+    scheduler.add_job(
+        run_weekly_pipeline_for_all_users,
+        trigger=CronTrigger(day_of_week="sun", hour=0, minute=0),
+        id="weekly_pipeline",
+        replace_existing=True,
+    )
+    scheduler.start()
+    logger.info("Scheduler started")
+
+    yield  # the app runs here, handling requests, until it's told to shut down
+
+    # Runs once, when the app shuts down
+    scheduler.shutdown()
+    logger.info("Scheduler shut down")
+
+app = FastAPI(title="ScoutFlux API", lifespan = lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -82,3 +108,35 @@ def list_briefings(
 ):
     """Returns briefings belonging to the current user only."""
     return db.query(Briefing).filter(Briefing.user_id == current_user.id).all()
+
+@app.get("/tracked-competitors", response_model=list[TrackedCompetitorResponse])
+def list_tracked_competitors(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Returns the current user's ongoing tracked competitors."""
+    return db.query(TrackedCompetitor).filter(TrackedCompetitor.user_id == current_user.id).all()
+
+
+@app.delete("/tracked-competitors/{tracked_id}", status_code=204)
+def delete_tracked_competitor(
+    tracked_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Removes a tracked competitor. Filters by id AND user_id together,
+    not just id, so a user can never delete another user's tracked
+    competitor by guessing or incrementing ids.
+    """
+    tracked = (
+        db.query(TrackedCompetitor)
+        .filter(TrackedCompetitor.id == tracked_id, TrackedCompetitor.user_id == current_user.id)
+        .first()
+    )
+
+    if tracked is None:
+        raise HTTPException(status_code=404, detail="Tracked competitor not found")
+
+    db.delete(tracked)
+    db.commit()

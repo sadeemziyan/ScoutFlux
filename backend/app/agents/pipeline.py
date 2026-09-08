@@ -5,6 +5,8 @@ from langgraph.graph import StateGraph, END
 
 from sqlalchemy.orm import Session
 from app.models.briefing import Briefing
+from app.models.tracked_competitor import TrackedCompetitor
+
 
 from app.agents.scraper_agent import scrape_url, close_all_selenium_drivers
 from app.agents.analyzer_agent import analyze_page
@@ -12,6 +14,7 @@ from app.agents.report_writer_agent import write_briefing, PageSignals, Briefing
 from app.schemas.company import CompanyTrackingRequest
 
 ANALYZER_CALL_DELAY_SECONDS = 4
+GEMINI_CALL_DELAY_SECONDS = 4  # both analyzer and report writer now share gemini-3.5-flash-lite's 15 RPM limit, so every Gemini call in the pipeline needs pacing, not just the analyzer's
 
 class PipelineState(TypedDict):
     """
@@ -47,7 +50,7 @@ def analyze_node(state: PipelineState) -> dict:
     for page in state["scraped_pages"]:
         signals = analyze_page(state["competitor_name"], page["url"], page["text"])
         page_signals.append(PageSignals(url=page["url"], signals=signals))
-        time.sleep(ANALYZER_CALL_DELAY_SECONDS)
+        time.sleep(GEMINI_CALL_DELAY_SECONDS)
 
     return {"page_signals": page_signals}
 
@@ -55,6 +58,7 @@ def analyze_node(state: PipelineState) -> dict:
 def synthesize_node(state: PipelineState) -> dict:
     """Runs the report writer agent to combine all page signals into one briefing."""
     briefing = write_briefing(state["competitor_name"], state["page_signals"])
+    time.sleep(GEMINI_CALL_DELAY_SECONDS)
     return {"briefing": briefing}
 
 
@@ -87,6 +91,31 @@ def _save_briefing(db: Session, user_id: int, user_company: str, competitor: "Co
     db.refresh(briefing)
     return briefing
 
+def _upsert_tracked_competitor(db: Session, user_id: int, user_company: str, competitor: "CompetitorInput") -> None:
+    """
+    Records that this user wants this competitor tracked going
+    forward. Updates the existing entry if one already exists for
+    this user+competitor_name, rather than creating a duplicate.
+    """
+    existing = (
+        db.query(TrackedCompetitor)
+        .filter(TrackedCompetitor.user_id == user_id, TrackedCompetitor.competitor_name == competitor.name)
+        .first()
+    )
+
+    if existing:
+        existing.user_company = user_company
+        existing.competitor_urls = [str(u) for u in competitor.urls]
+    else:
+        db.add(TrackedCompetitor(
+            user_id=user_id,
+            user_company=user_company,
+            competitor_name=competitor.name,
+            competitor_urls=[str(u) for u in competitor.urls],
+        ))
+
+    db.commit()
+
 def run_pipeline(request: CompanyTrackingRequest, db: Session, user_id: int) -> list[Briefing]:
     """
     Runs the full pipeline for every competitor in the request and
@@ -105,8 +134,10 @@ def run_pipeline(request: CompanyTrackingRequest, db: Session, user_id: int) -> 
                 "briefing": None,
             }
             final_state = graph.invoke(initial_state)
+            _upsert_tracked_competitor(db, user_id, request.user_company, competitor)
             saved = _save_briefing(db, user_id, request.user_company, competitor, final_state["briefing"])
             saved_briefings.append(saved)
+
     finally:
         close_all_selenium_drivers()
 

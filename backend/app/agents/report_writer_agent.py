@@ -6,7 +6,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from app.core.config import settings
 from app.agents.analyzer_agent import CompetitorSignals
 
-REPORT_WRITER_MODEL = "gemini-3.6-flash"
+REPORT_WRITER_MODEL = "gemini-3.5-flash-lite"
 
 
 class PageSignals(BaseModel):
@@ -51,11 +51,15 @@ Extracted signals per page:
 
 def get_report_writer_llm() -> ChatGoogleGenerativeAI:
     """
-    Returns the LLM used for report synthesis. Currently Gemini Flash,
-    matching the analyzer agent. Swapping to a stronger model later
-    (Claude or GPT) only requires changing this function, since the
-    rest of the pipeline depends on the CompetitorSignals/BriefingContent
-    schemas, not on which provider produced them.
+    Returns the LLM used for report synthesis. Uses Flash-Lite rather
+    than standard Flash, despite Flash's somewhat better synthesis
+    quality, because Flash's free tier caps at 20 requests/day total,
+    shared across every user of the deployed app. That ceiling breaks
+    down quickly with real traffic plus the weekly scheduled job,
+    while Flash-Lite's 500/day comfortably covers portfolio-demo
+    scale. Swapping to a stronger model (Claude or GPT) later, once
+    there is a reason to pay for API access, only requires changing
+    this function.
     """
     return ChatGoogleGenerativeAI(
         model=REPORT_WRITER_MODEL,
