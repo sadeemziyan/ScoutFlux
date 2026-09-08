@@ -28,13 +28,18 @@ function App() {
     }
 
     async function fetchMe() {
-      const response = await apiFetch('/auth/me', token)
-      if (response.status === 401) {
-        handleLogout()
-        return
+      try {
+        const response = await apiFetch('/auth/me', token)
+        if (response.status === 401) {
+          handleLogout()
+          return
+        }
+        if (!response.ok) throw new Error(`Server responded with ${response.status}`)
+        const data = await response.json()
+        setUserEmail(data.email)
+      } catch (err) {
+        console.error('Failed to fetch current user:', err)
       }
-      const data = await response.json()
-      setUserEmail(data.email)
     }
 
     fetchMe()
