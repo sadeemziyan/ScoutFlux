@@ -9,7 +9,7 @@ from app.models.tracked_competitor import TrackedCompetitor
 from app.schemas.tracked_competitor import TrackedCompetitorResponse
 from app.schemas.company import CompanyTrackingRequest
 from app.schemas.briefing import BriefingResponse
-from app.schemas.auth import UserSignup, UserLogin, TokenResponse, UserResponse
+from app.schemas.auth import UserSignup, UserLogin, TokenResponse, UserResponse, DigestPreferenceUpdate
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
 from app.agents.pipeline import run_pipeline
 
@@ -90,6 +90,18 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
 @app.get("/auth/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     """Returns the currently authenticated user's basic info."""
+    return current_user
+
+@app.patch("/auth/me/digest", response_model=UserResponse)
+def update_digest_preference(
+    payload: DigestPreferenceUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Turns weekly email digests on or off for the current user."""
+    current_user.receive_digest = payload.receive_digest
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 @app.post("/companies/track", response_model=list[BriefingResponse])

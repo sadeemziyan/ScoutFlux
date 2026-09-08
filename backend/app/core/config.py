@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     database_url_direct: str   # direct — used only by Alembic migrations
     gemini_api_key: str
     jwt_secret_key: str
+    gmail_address: str
+    gmail_app_password: str
 
     model_config = SettingsConfigDict(
         env_file=".env",

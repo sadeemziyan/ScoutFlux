@@ -8,6 +8,8 @@ from app.models.tracked_competitor import TrackedCompetitor
 from app.schemas.company import CompanyTrackingRequest, CompetitorInput
 from app.agents.pipeline import run_pipeline, GEMINI_CALL_DELAY_SECONDS
 
+from app.services.email_service import send_digest_email
+
 logger = logging.getLogger(__name__)
 
 
@@ -38,7 +40,22 @@ def run_weekly_pipeline_for_all_users() -> None:
                         for row in rows
                     ],
                 )
-                run_pipeline(request, db, user_id)
+                saved_briefings = run_pipeline(request, db, user_id)
+
+                user = db.query(User).filter(User.id == user_id).first()
+                if user and user.receive_digest:
+                    try:
+                        send_digest_email(
+                            to_email=user.email,
+                            user_company=rows[0].user_company,
+                            briefings=saved_briefings,
+                        )
+                    except Exception as e:
+                        # A bad/unreachable email shouldn't be treated
+                        # like a pipeline failure - the briefings were
+                        # still saved fine, so just log and move on.
+                        logger.error(f"Digest email failed for user_id {user_id}: {e}")
+
             except Exception as e:
                 # One user's pipeline failing (e.g. a transient Gemini
                 # 503, same as we hit earlier) shouldn't stop every
