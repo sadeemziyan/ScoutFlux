@@ -70,9 +70,10 @@ def build_pipeline_graph():
     graph.add_edge("synthesize", END)
     return graph.compile()
 
-def _save_briefing(db: Session, user_company: str, competitor: "CompetitorInput", content: BriefingContent) -> Briefing:
+def _save_briefing(db: Session, user_id: int, user_company: str, competitor: "CompetitorInput", content: BriefingContent) -> Briefing:
     """Persists one competitor's synthesized briefing as a new row."""
     briefing = Briefing(
+        user_id=user_id,
         user_company=user_company,
         competitor_name=competitor.name,
         competitor_urls=[str(u) for u in competitor.urls],
@@ -86,7 +87,7 @@ def _save_briefing(db: Session, user_company: str, competitor: "CompetitorInput"
     db.refresh(briefing)
     return briefing
 
-def run_pipeline(request: CompanyTrackingRequest, db: Session) -> list[Briefing]:
+def run_pipeline(request: CompanyTrackingRequest, db: Session, user_id: int) -> list[Briefing]:
     """
     Runs the full pipeline for every competitor in the request and
     saves each result as a Briefing row. Returns the saved rows.
@@ -104,7 +105,7 @@ def run_pipeline(request: CompanyTrackingRequest, db: Session) -> list[Briefing]
                 "briefing": None,
             }
             final_state = graph.invoke(initial_state)
-            saved = _save_briefing(db, request.user_company, competitor, final_state["briefing"])
+            saved = _save_briefing(db, user_id, request.user_company, competitor, final_state["briefing"])
             saved_briefings.append(saved)
     finally:
         close_all_selenium_drivers()
