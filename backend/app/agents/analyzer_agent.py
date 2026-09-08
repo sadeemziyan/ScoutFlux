@@ -5,8 +5,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.core.config import settings
 
-ANALYZER_MODEL = "gemini-3.6-flash"
-
+ANALYZER_MODEL = "gemini-3.5-flash-lite"
 
 class CompetitorSignals(BaseModel):
     """

@@ -5,7 +5,7 @@ class CompetitorInput(BaseModel):
     """A single competitor to track: display name + URL to scrape."""
 
     name: str
-    url: HttpUrl
+    urls: list[HttpUrl]
 
 
 class CompanyTrackingRequest(BaseModel):
