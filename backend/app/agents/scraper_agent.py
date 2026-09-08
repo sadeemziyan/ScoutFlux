@@ -266,7 +266,7 @@ def fetch_with_selenium(driver: webdriver.Chrome, url: str) -> str | None:
 
 
 def _determine_rendering_strategy(domain: str, sample_url: str, static_text: str) -> tuple[str, str | None]:
-       """
+    """
     Decides, once per domain, whether pages here need Selenium by
     directly comparing static vs. rendered content on one sample page,
     rather than guessing from a fixed length threshold, which can't
