@@ -10,11 +10,6 @@ from app.core.config import settings
 
 
 def build_digest_html(user_company: str, briefings: list) -> str:
-    """
-    Turns a list of this week's Briefing rows into one HTML email body.
-    `briefings` is a list of Briefing model instances (SQLAlchemy rows),
-    one per tracked competitor.
-    """
     sections = []
     for b in briefings:
         categories = [
@@ -23,8 +18,6 @@ def build_digest_html(user_company: str, briefings: list) -> str:
             ("Pricing Changes", b.pricing_changes),
             ("Tech Stack Changes", b.tech_stack_changes),
         ]
-        # Skip categories the analyzer found nothing for, same as
-        # BriefingCard.jsx already does on the frontend.
         category_html = "".join(
             f"<p><strong>{label}:</strong> {text}</p>"
             for label, text in categories
@@ -52,11 +45,6 @@ def build_digest_html(user_company: str, briefings: list) -> str:
 
 
 def send_digest_email(to_email: str, user_company: str, briefings: list) -> None:
-    """
-    Sends one digest email to `to_email`, built from `briefings`.
-    Raises on failure — the caller (the weekly job) decides how to
-    handle that so one user's bad email address doesn't crash the run.
-    """
     message = MIMEMultipart("alternative")
     message["Subject"] = f"ScoutFlux Weekly Digest — {user_company}"
     message["From"] = f"ScoutFlux <{settings.gmail_address}>"
@@ -65,9 +53,6 @@ def send_digest_email(to_email: str, user_company: str, briefings: list) -> None
     html_body = build_digest_html(user_company, briefings)
     message.attach(MIMEText(html_body, "html"))
 
-    # Port 465 = SSL is active from the moment the connection opens
-    # (as opposed to port 587, which connects plain and then upgrades
-    # via STARTTLS). Both work with Gmail; SSL on 465 is one step fewer.
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(settings.gmail_address, settings.gmail_app_password)
         server.sendmail(settings.gmail_address, to_email, message.as_string())
