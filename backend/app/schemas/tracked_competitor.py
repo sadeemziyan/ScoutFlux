@@ -8,6 +8,7 @@ class TrackedCompetitorResponse(BaseModel):
     user_company: str
     competitor_name: str
     competitor_urls: list[str]
+    github_org: str | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

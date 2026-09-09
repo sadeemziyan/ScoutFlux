@@ -128,6 +128,11 @@ function TrackedCompetitorsCard({ token, onUnauthorized }) {
             <div>
               <p className="text-sm font-medium text-gray-800">{t.competitor_name}</p>
               <p className="text-xs text-gray-500">{t.competitor_urls.length} page(s) tracked</p>
+              {t.github_org && (
+                <span className="inline-block mt-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-0.5">
+                  GitHub: {t.github_org}
+                </span>
+              )}
             </div>
             <button
               onClick={() => handleRemove(t.id)}

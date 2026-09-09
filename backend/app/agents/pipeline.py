@@ -112,6 +112,7 @@ def _save_briefing(db: Session, user_id: int, user_company: str, competitor: "Co
         hiring_signals=content.hiring_signals,
         pricing_changes=content.pricing_changes,
         tech_stack_changes=content.tech_stack_changes,
+        github_activity=content.github_activity,        
     )
     db.add(briefing)
     db.commit()
@@ -133,12 +134,14 @@ def _upsert_tracked_competitor(db: Session, user_id: int, user_company: str, com
     if existing:
         existing.user_company = user_company
         existing.competitor_urls = [str(u) for u in competitor.urls]
+        existing.github_org = competitor.github_org
     else:
         db.add(TrackedCompetitor(
             user_id=user_id,
             user_company=user_company,
             competitor_name=competitor.name,
             competitor_urls=[str(u) for u in competitor.urls],
+            github_org=competitor.github_org,
         ))
 
     db.commit()
@@ -156,7 +159,7 @@ def run_pipeline(request: CompanyTrackingRequest, db: Session, user_id: int) -> 
             initial_state: PipelineState = {
                 "competitor_name": competitor.name,
                 "urls": [str(u) for u in competitor.urls],
-                "github_org": getattr(competitor, "github_org", None),
+                "github_org": competitor.github_org,
                 "scraped_pages": [],
                 "page_signals": [],
                 "briefing": None,

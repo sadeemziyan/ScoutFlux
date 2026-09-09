@@ -36,7 +36,7 @@ def run_weekly_pipeline_for_all_users() -> None:
                 request = CompanyTrackingRequest(
                     user_company=rows[0].user_company,
                     competitors=[
-                        CompetitorInput(name=row.competitor_name, urls=row.competitor_urls)
+                        CompetitorInput(name=row.competitor_name, urls=row.competitor_urls, github_org=row.github_org)
                         for row in rows
                     ],
                 )
