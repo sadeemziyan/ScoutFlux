@@ -9,8 +9,9 @@ from app.models.tracked_competitor import TrackedCompetitor
 
 
 from app.agents.scraper_agent import scrape_url, close_all_selenium_drivers
-from app.agents.analyzer_agent import analyze_page
+from app.agents.analyzer_agent import analyze_page, CompetitorSignals
 from app.agents.report_writer_agent import write_briefing, PageSignals, BriefingContent
+from app.services.github_service import get_github_activity_summary
 from app.schemas.company import CompanyTrackingRequest
 
 ANALYZER_CALL_DELAY_SECONDS = 4
@@ -24,6 +25,7 @@ class PipelineState(TypedDict):
 
     competitor_name: str
     urls: list[str]
+    github_org: str | None
     scraped_pages: list[dict]
     page_signals: list[PageSignals]
     briefing: BriefingContent | None
@@ -54,6 +56,30 @@ def analyze_node(state: PipelineState) -> dict:
 
     return {"page_signals": page_signals}
 
+def github_node(state: PipelineState) -> dict:
+    """
+    Fetches a lightweight GitHub activity summary if this competitor
+    has a github_org set. Appends it as one more PageSignals entry
+    directly to page_signals, bypassing analyze_node's LLM call
+    entirely - this data is already structured, not messy scraped text
+    needing extraction. A no-op (returns page_signals unchanged) when
+    github_org is None, which is always true for now until the
+    CompetitorInput schema gets the field in the next step.
+    """
+    page_signals = state["page_signals"]
+
+    if state["github_org"]:
+        summary = get_github_activity_summary(state["github_org"])
+        if summary:
+            page_signals = page_signals + [
+                PageSignals(
+                    url=f"https://github.com/{state['github_org']}",
+                    signals=CompetitorSignals(),
+                    github_activity=summary,
+                )
+            ]
+
+    return {"page_signals": page_signals}
 
 def synthesize_node(state: PipelineState) -> dict:
     """Runs the report writer agent to combine all page signals into one briefing."""
@@ -63,14 +89,15 @@ def synthesize_node(state: PipelineState) -> dict:
 
 
 def build_pipeline_graph():
-    """Builds the three-node scrape/analyze/synthesize pipeline for one competitor."""
     graph = StateGraph(PipelineState)
     graph.add_node("scrape", scrape_node)
     graph.add_node("analyze", analyze_node)
+    graph.add_node("github", github_node)
     graph.add_node("synthesize", synthesize_node)
     graph.set_entry_point("scrape")
     graph.add_edge("scrape", "analyze")
-    graph.add_edge("analyze", "synthesize")
+    graph.add_edge("analyze", "github")
+    graph.add_edge("github", "synthesize")
     graph.add_edge("synthesize", END)
     return graph.compile()
 
@@ -129,6 +156,7 @@ def run_pipeline(request: CompanyTrackingRequest, db: Session, user_id: int) -> 
             initial_state: PipelineState = {
                 "competitor_name": competitor.name,
                 "urls": [str(u) for u in competitor.urls],
+                "github_org": getattr(competitor, "github_org", None),
                 "scraped_pages": [],
                 "page_signals": [],
                 "briefing": None,
