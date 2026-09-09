@@ -39,6 +39,9 @@ Extract ONLY information that is genuinely present in the text below. \
 Do not guess, infer, or invent signals that aren't actually stated.
 Summarize and paraphrase in your own words - do not copy sentences \
 verbatim from the source text.
+Only report a signal if there is enough context to describe it in a \
+complete sentence. A bare word or fragment with no surrounding context \
+is not a genuine signal - leave that category null instead.
 If a category has no relevant information in this text, leave it null.
 
 Competitor: {competitor_name}
@@ -108,4 +111,16 @@ def analyze_github_commits(commit_messages: list[str]) -> str:
     prompt = GITHUB_COMMIT_PROMPT.format(
         commit_messages="\n".join(f"- {m}" for m in commit_messages)
     )
-    return llm.invoke(prompt).content.strip()
+    content = llm.invoke(prompt).content
+
+    # ChatGoogleGenerativeAI's .content is usually a plain string, but
+    # some Gemini responses come back as a list of content blocks
+    # instead - a known langchain-google-genai quirk, confirmed live
+    # against gemini-3.5-flash-lite here. This normalizes both shapes.
+    if isinstance(content, list):
+        content = "".join(
+            block.get("text", "") if isinstance(block, dict) else str(block)
+            for block in content
+        )
+
+    return content.strip()
