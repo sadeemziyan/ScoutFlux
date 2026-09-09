@@ -21,5 +21,6 @@ class TrackedCompetitor(Base):
     user_company = Column(String, nullable=False)
     competitor_name = Column(String, nullable=False, index=True)
     competitor_urls = Column(ARRAY(String), nullable=False)
+    github_org = Column(String, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

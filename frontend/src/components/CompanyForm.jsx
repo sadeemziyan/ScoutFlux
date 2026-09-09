@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 function CompanyForm({ onSubmit }) {
   const [userCompany, setUserCompany] = useState('')
-  const [competitors, setCompetitors] = useState([{ name: '', urlsText: '' }])
+  const [competitors, setCompetitors] = useState([{ name: '', urlsText: '', githubOrg: '' }])
 
   function updateCompetitor(index, field, value) {
     const updated = [...competitors]
@@ -11,7 +11,7 @@ function CompanyForm({ onSubmit }) {
   }
 
   function addCompetitor() {
-    setCompetitors([...competitors, { name: '', urlsText: '' }])
+    setCompetitors([...competitors, { name: '', urlsText: '', githubOrg: '' }])
   }
 
   function removeCompetitor(index) {
@@ -29,6 +29,7 @@ function CompanyForm({ onSubmit }) {
           .split('\n')
           .map((url) => url.trim())
           .filter((url) => url.length > 0),
+        github_org: c.githubOrg.trim() || null,
       })),
     }
 
@@ -84,6 +85,15 @@ function CompanyForm({ onSubmit }) {
             rows={4}
             className="w-full border border-gray-300 rounded-md px-3 py-2 font-mono text-sm"
           />
+          
+          <input
+            type="text"
+            placeholder="GitHub organization or username (optional), e.g. makenotion"
+            value={competitor.githubOrg}
+            onChange={(e) => updateCompetitor(index, 'githubOrg', e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+          />
+          
         </div>
       ))}
 

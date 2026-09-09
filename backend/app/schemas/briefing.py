@@ -14,6 +14,7 @@ class BriefingResponse(BaseModel):
     hiring_signals: str | None
     pricing_changes: str | None
     tech_stack_changes: str | None
+    github_activity: str | None
     created_at: datetime
 
     # Lets Pydantic build this schema directly from a SQLAlchemy model

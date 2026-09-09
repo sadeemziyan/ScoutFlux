@@ -4,6 +4,7 @@ function BriefingCard({ briefing }) {
     { label: 'Hiring Signals', value: briefing.hiring_signals },
     { label: 'Pricing Changes', value: briefing.pricing_changes },
     { label: 'Tech Stack Changes', value: briefing.tech_stack_changes },
+    { label: 'GitHub Activity', value: briefing.github_activity },
   ]
 
   const hasAnySignal = categories.some((c) => c.value)

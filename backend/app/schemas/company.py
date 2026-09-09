@@ -6,6 +6,7 @@ class CompetitorInput(BaseModel):
 
     name: str
     urls: list[HttpUrl]
+    github_org: str | None = None
 
 
 class CompanyTrackingRequest(BaseModel):

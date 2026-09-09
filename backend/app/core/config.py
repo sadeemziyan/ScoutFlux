@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str
     gmail_address: str
     gmail_app_password: str
+    github_token: str
 
     model_config = SettingsConfigDict(
         env_file=".env",

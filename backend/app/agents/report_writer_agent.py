@@ -18,13 +18,14 @@ class PageSignals(BaseModel):
 
     url: str
     signals: CompetitorSignals
+    github_activity: Optional[str] = None
 
 
 class BriefingContent(BaseModel):
     """
     Final synthesized briefing for one competitor. Combines signals
     from all of that competitor's scraped pages into one coherent
-    summary per category. Matches the four category fields on the
+    summary per category. Matches the five category fields on the
     Briefing database model.
     """
 
@@ -32,6 +33,7 @@ class BriefingContent(BaseModel):
     hiring_signals: Optional[str] = Field(default=None, description="Synthesized summary of hiring activity across all sources. Null if none found.")
     pricing_changes: Optional[str] = Field(default=None, description="Synthesized summary of pricing information across all sources. Null if none found.")
     tech_stack_changes: Optional[str] = Field(default=None, description="Synthesized summary of tech stack signals across all sources. Null if none found.")
+    github_activity: Optional[str] = Field(default=None, description="GitHub repository activity summary. Set directly from github_service, never by the LLM - see write_briefing().")
 
 
 REPORT_PROMPT = """You are writing a weekly competitive intelligence briefing \
@@ -73,17 +75,27 @@ def write_briefing(competitor_name: str, page_signals: list[PageSignals]) -> Bri
     briefing for a competitor. Skips the LLM call entirely and returns
     an all-null result if no page had any genuine signal, avoiding a
     wasted API call for nothing.
+
+    github_activity is handled separately from LLM synthesis entirely -
+    it's already a finished sentence from a structured API call, not
+    raw scraped text needing extraction, so it's copied straight
+    through onto the result rather than asking the LLM to reproduce or
+    re-synthesize it. This mirrors github_service.py's own reasoning
+    for skipping an LLM call in the first place.
     """
+    github_activity = next((ps.github_activity for ps in page_signals if ps.github_activity), None)
+    scraped_page_signals = [ps for ps in page_signals if not ps.github_activity]
+
     has_any_signal = any(
         ps.signals.product_updates
         or ps.signals.hiring_signals
         or ps.signals.pricing_changes
         or ps.signals.tech_stack_changes
-        for ps in page_signals
+        for ps in scraped_page_signals
     )
 
     if not has_any_signal:
-        return BriefingContent()
+        return BriefingContent(github_activity=github_activity)
 
     llm = get_report_writer_llm()
     structured_llm = llm.with_structured_output(BriefingContent)
@@ -94,9 +106,14 @@ def write_briefing(competitor_name: str, page_signals: list[PageSignals]) -> Bri
         f"Hiring signals: {ps.signals.hiring_signals or 'none found'}\n"
         f"Pricing changes: {ps.signals.pricing_changes or 'none found'}\n"
         f"Tech stack changes: {ps.signals.tech_stack_changes or 'none found'}"
-        for ps in page_signals
+        for ps in scraped_page_signals
     )
 
     prompt = REPORT_PROMPT.format(competitor_name=competitor_name, sources_text=sources_text)
 
-    return structured_llm.invoke(prompt)
+    briefing = structured_llm.invoke(prompt)
+    # Overwrite whatever the LLM guessed for this field (its prompt
+    # never mentions github_activity, so it should default to null
+    # anyway) with the real, already-correct value.
+    briefing.github_activity = github_activity
+    return briefing

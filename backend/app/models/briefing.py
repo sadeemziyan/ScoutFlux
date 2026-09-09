@@ -30,7 +30,8 @@ class Briefing(Base):
     hiring_signals = Column(Text, nullable=True)
     pricing_changes = Column(Text, nullable=True)
     tech_stack_changes = Column(Text, nullable=True)
-
+    github_activity = Column(Text, nullable=True)
+    
     # Automatically set by the database when a row is created —
     # func.now() tells PostgreSQL to use its own clock, not Python's,
     # which avoids timezone mismatches between your app and the DB.
