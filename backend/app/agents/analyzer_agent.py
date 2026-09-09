@@ -79,3 +79,33 @@ def analyze_page(competitor_name: str, url: str, scraped_text: str) -> Competito
     )
 
     return structured_llm.invoke(prompt)
+
+GITHUB_COMMIT_PROMPT = """You are summarizing a competitor's recent GitHub commit \
+activity based on their commit messages from the past week.
+
+Summarize in one concise sentence what the commits appear to be about, based \
+ONLY on what the messages actually indicate. Do not guess or invent a theme \
+that isn't genuinely supported by the messages.
+
+If the messages are too generic, vague, or unclear to support any real \
+conclusion (e.g. "fix bug", "update", "wip", "merge"), respond with exactly: \
+"No clear indication of recent work could be determined from commit messages."
+
+Commit messages:
+{commit_messages}
+"""
+
+
+def analyze_github_commits(commit_messages: list[str]) -> str:
+    """
+    Interprets recent commit messages into a one-sentence activity
+    summary. Only called when there's at least one commit to
+    interpret - github_service skips this entirely for zero-commit
+    weeks, same "don't call the LLM for nothing" discipline as
+    write_briefing's early exit.
+    """
+    llm = get_analyzer_llm()
+    prompt = GITHUB_COMMIT_PROMPT.format(
+        commit_messages="\n".join(f"- {m}" for m in commit_messages)
+    )
+    return llm.invoke(prompt).content.strip()
