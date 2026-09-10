@@ -40,7 +40,7 @@ REPORT_PROMPT = """You are writing a weekly competitive intelligence briefing \
 about {competitor_name}, based on signals already extracted from several \
 pages on their website.
 
-Sy  nthesize the extracted signals below into one clear, concise summary \
+Synthesize the extracted signals below into one clear, concise summary \
 per category. Combine and deduplicate overlapping information across \
 pages rather than restating each source separately. Do not invent \
 anything beyond what is stated in the sources. If a category has no \

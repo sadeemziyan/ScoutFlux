@@ -55,10 +55,9 @@ Scraped page text:
 def get_analyzer_llm() -> ChatGoogleGenerativeAI:
     """
     Returns a Gemini Flash model configured for structured signal
-    extraction. Flash (not a stronger/pricier model) is deliberate:
+    extraction. Flash-lite (not a stronger/pricier model) is deliberate:
     this agent runs once per scraped page, so call volume is high
     relative to the report-writer agent, which runs once per briefing.
-    Temperature 0 since this is factual extraction, not creative work.
     """
     return ChatGoogleGenerativeAI(
         model=ANALYZER_MODEL,
