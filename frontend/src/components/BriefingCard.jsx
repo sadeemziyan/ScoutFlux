@@ -27,7 +27,7 @@ function BriefingCard({ briefing }) {
           category.value && (
             <div key={category.label}>
               <p className="text-sm font-medium text-gray-700">{category.label}</p>
-              <p className="text-sm text-gray-600">{category.value}</p>
+              <p className="text-sm text-gray-600 whitespace-pre-line">{category.value}</p>
             </div>
           )
       )}

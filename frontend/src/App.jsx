@@ -7,7 +7,10 @@ import { apiFetch } from './api'
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [userEmail, setUserEmail] = useState(null)
-  const [view, setView] = useState('form')
+const [view, setView] = useState(() => {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('view') === 'dashboard' ? 'dashboard' : 'form'
+})
   const [submitStatus, setSubmitStatus] = useState('idle')
   const [errorMessage, setErrorMessage] = useState('')
 

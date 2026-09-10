@@ -6,17 +6,19 @@ GitHub org/username, using GitHub's official MCP server.
 import asyncio
 import json
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
+from app.agents.analyzer_agent import analyze_github_commits
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 GITHUB_MCP_URL = "https://api.githubcopilot.com/mcp/"
 TOP_N_REPOS_FOR_COMMIT_CHECK = 5
-
+GEMINI_CALL_DELAY_SECONDS = 4
 
 def get_github_activity_summary(org: str) -> str | None:
     """
@@ -92,6 +94,7 @@ async def _fetch_github_activity(org: str) -> str | None:
     active_repos = all_repos_data.get("items", [])[:TOP_N_REPOS_FOR_COMMIT_CHECK]
 
     total_commits = 0
+    commit_messages: list[str] = []
     for repo in active_repos:
         try:
             commits_result = await commits_tool.ainvoke({
@@ -100,19 +103,31 @@ async def _fetch_github_activity(org: str) -> str | None:
                 "since": seven_days_ago,
             })
             commits_data = _parse_tool_result(commits_result)
-            # list_commits returns a plain list, not a {"items": [...]} wrapper.
             if isinstance(commits_data, list):
                 total_commits += len(commits_data)
+                for commit in commits_data:
+                    message = commit.get("commit", {}).get("message", "")
+                    if message:
+                        commit_messages.append(message)
         except Exception as e:
-            # One repo's commit history failing to fetch (e.g. empty or
-            # archived repo) shouldn't sink the whole summary.
             logger.warning(f"Could not fetch commits for {org}/{repo.get('name')}: {e}")
 
-    return (
+    line1 = (
         f"{org} has {total_count} public repositories on GitHub, "
         f"with {new_repo_count} created in the last 30 days. "
         f"Across their most active repos, there were {total_commits} commits in the past week."
     )
+
+    if total_commits == 0:
+        line2 = "No commit activity in the past week."
+    else:
+        line2 = analyze_github_commits(commit_messages)
+        # A real Gemini call sharing the same 15 RPM budget as every
+        # other call in the pipeline - paced the same way analyze_node
+        # and synthesize_node pace theirs.
+        time.sleep(GEMINI_CALL_DELAY_SECONDS)
+
+    return f"{line1}\n{line2}"
 
 
 def _parse_tool_result(result):

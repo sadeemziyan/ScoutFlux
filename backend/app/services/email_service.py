@@ -17,9 +17,10 @@ def build_digest_html(user_company: str, briefings: list) -> str:
             ("Hiring Signals", b.hiring_signals),
             ("Pricing Changes", b.pricing_changes),
             ("Tech Stack Changes", b.tech_stack_changes),
+            ("GitHub Activity", b.github_activity),            
         ]
         category_html = "".join(
-            f"<p><strong>{label}:</strong> {text}</p>"
+            f"<p><strong>{label}:</strong> {text.replace(chr(10), '<br>')}</p>"
             for label, text in categories
             if text
         )
@@ -39,6 +40,10 @@ def build_digest_html(user_company: str, briefings: list) -> str:
         <h2>ScoutFlux Weekly Digest</h2>
         <p style="color:#555">Competitor intelligence for {user_company}</p>
         {body}
+        <p style="font-size: 12px; color: #999; margin-top: 24px;">
+          To see the full history of updates for these competitors, visit your
+          <a href="https://scoutflux.vercel.app/?view=dashboard" style="color: #2563eb;">ScoutFlux dashboard</a>.
+        </p>
       </body>
     </html>
     """
@@ -46,7 +51,7 @@ def build_digest_html(user_company: str, briefings: list) -> str:
 
 def send_digest_email(to_email: str, user_company: str, briefings: list) -> None:
     message = MIMEMultipart("alternative")
-    message["Subject"] = f"ScoutFlux Weekly Digest — {user_company}"
+    message["Subject"] = f"ScoutFlux Weekly Digest - {user_company}"
     message["From"] = f"ScoutFlux <{settings.gmail_address}>"
     message["To"] = to_email
 

@@ -62,9 +62,7 @@ def github_node(state: PipelineState) -> dict:
     has a github_org set. Appends it as one more PageSignals entry
     directly to page_signals, bypassing analyze_node's LLM call
     entirely - this data is already structured, not messy scraped text
-    needing extraction. A no-op (returns page_signals unchanged) when
-    github_org is None, which is always true for now until the
-    CompetitorInput schema gets the field in the next step.
+    needing extraction.
     """
     page_signals = state["page_signals"]
 
