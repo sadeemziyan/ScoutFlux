@@ -1,6 +1,6 @@
 /**
  * The mark is a small ledger: four rules of differing length, the way a
- * briefing reports differing amounts per category. Flat ink on paper -
+ * briefing reports differing amounts per category. Flat ink on canvas -
  * no gradient, no glow, no color.
  */
 function Wordmark({ className = '', showText = true }) {

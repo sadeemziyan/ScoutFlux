@@ -1,25 +1,43 @@
 @import "tailwindcss";
 
 /* ScoutFlux design tokens.
-   Palette is warm-neutral "archival paper" - deliberately not the
-   blue-gray dashboard default. Every contrast pair below was verified
-   against WCAG: ink 16.4:1, graphite 5.35:1 and signal 6.39:1 on
-   paper (all AA text), edge 3.51:1 (AA for non-text UI borders).
-   `rule` is 1.25:1 and is therefore decorative ONLY - it must never
-   be the sole indicator of an interactive control's boundary. */
+   A cool slate/navy ground with a single aged-brass marker. The accent
+   is deliberately the opposite temperature from everything else in the
+   app - on a cool ground the reflexive choices are blue or emerald, and
+   both read as stock dashboard chrome. Brass stays legible at the
+   hairline scale it is actually used at, and never dissolves into the
+   slate.
+
+   Every contrast pair below was computed, not eyeballed:
+     ink     16.89:1 on canvas   (AAA text)
+     slate    5.84:1 on canvas   (AA text)
+     accent   4.72:1 on canvas   (AA text)
+     accent   3.58:1 on ink      (AA non-text - the focus ring on a
+                                  filled primary button)
+     edge     3.39:1 on canvas   (AA non-text - control borders)
+   `rule` is 1.16:1 and is therefore decorative ONLY - it must never be
+   the sole indicator of an interactive control's boundary. */
 @theme {
-  --color-paper: #FAF9F6;
+  --color-canvas: #F6F8FA;
   --color-surface: #FFFFFF;
-  --color-ink: #1C1B19;
-  --color-graphite: #6B675F;
-  --color-rule: #E4E0D9;
-  --color-edge: #8C8477;
-  --color-signal: #8A4B2A;
+  --color-ink: #101722;
+  --color-slate: #55617A;
+  --color-rule: #E3E8EF;
+  --color-edge: #7B8899;
+  --color-accent: #8A6A2F;
+
+  /* Interaction states, kept as tokens so no magic hex values end up
+     scattered across components. */
+  --color-ink-hover: #1E2A3A;
+  --color-row-hover: #EEF2F7;
+  --color-row-selected: #E8EEF6;
+  --color-field-hover: #EDF1F6;
+  --color-placeholder: #8B97AB;
 
   /* Sans carries measured data, serif carries synthesized prose.
      See BriefingCard - this split is semantic, not decorative. */
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: "Source Serif 4", ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: "Schibsted Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Spectral", ui-serif, Georgia, "Times New Roman", serif;
 
   --radius-control: 4px;
   --radius-panel: 6px;
@@ -31,7 +49,7 @@
   }
 
   body {
-    background-color: var(--color-paper);
+    background-color: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: 0.875rem;
@@ -40,24 +58,30 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Counts, dates and repo/commit figures must align in columns and
-     never reflow as digits change - this is why the app needs no
-     monospace font anywhere. */
-  :where(time, [data-numeric]) {
+  /* Counts and figures that stack in a column must not reflow as their
+     digits change - this is why the app needs no monospace font.
+
+     Apply data-numeric ONLY to bare numerals. Schibsted Grotesk's tnum
+     feature also substitutes tabular-width comma and period (so that
+     1,234.56 aligns), which inside a sentence renders as a visible gap
+     before every comma and full stop. Prose containing numbers must
+     therefore be left alone. */
+  :where([data-numeric]) {
     font-variant-numeric: tabular-nums;
   }
 
   /* One consistent, high-visibility focus treatment for every
-     interactive element in the app. Sienna reads clearly against both
-     the paper ground and the ink-filled buttons. */
+     interactive element. Brass is the only warm colour in the app, so
+     it reads unambiguously against both the canvas and the navy fill
+     of a primary button. */
   :where(a, button, input, textarea, select, [tabindex]):focus-visible {
-    outline: 2px solid var(--color-signal);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
     border-radius: 2px;
   }
 
   ::selection {
-    background-color: #E8D9CE;
+    background-color: #D9E4F2;
     color: var(--color-ink);
   }
 }

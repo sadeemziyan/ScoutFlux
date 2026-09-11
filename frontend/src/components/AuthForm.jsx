@@ -40,14 +40,14 @@ function AuthForm({ onAuthSuccess }) {
       <div className="w-full max-w-[24rem]">
         <div className="mb-7">
           <Wordmark className="mb-3" />
-          <p className="text-graphite leading-relaxed">
+          <p className="text-[0.9375rem] text-slate leading-relaxed">
             Weekly competitive intelligence, assembled automatically from your
             competitors' public footprint.
           </p>
         </div>
 
         <Panel className="p-6">
-          <h1 className="font-serif text-[1.25rem] font-semibold text-ink mb-5">
+          <h1 className="font-serif text-[1.3125rem] font-semibold text-ink mb-5">
             {isSignup ? 'Create an account' : 'Sign in'}
           </h1>
 
@@ -93,7 +93,7 @@ function AuthForm({ onAuthSuccess }) {
             </Button>
           </form>
 
-          <p className="mt-4 text-[0.8125rem] text-graphite">
+          <p className="mt-4 text-[0.875rem] text-slate">
             {isSignup ? 'Already have an account?' : 'No account yet?'}{' '}
             <button
               type="button"
@@ -113,8 +113,8 @@ function AuthForm({ onAuthSuccess }) {
         {/* The same five categories the briefings are organized around -
             stated as fact, not sold. */}
         <div className="mt-6">
-          <p className="text-[0.75rem] text-graphite mb-1.5">Tracked every week</p>
-          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[0.75rem] text-ink">
+          <p className="text-[0.8125rem] text-slate mb-1.5">Tracked every week</p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-ink">
             {CATEGORIES.map((category) => (
               <li key={category.key}>{category.label}</li>
             ))}

@@ -20,13 +20,13 @@ export function CategoryLedger({ ledger, variant = 'row' }) {
   if (variant === 'summary') {
     if (found.length === 0) {
       return (
-        <p className="text-[0.75rem] text-graphite">
+        <p className="text-[0.8125rem] text-slate">
           All 5 categories were checked. Nothing found in this run.
         </p>
       )
     }
     return (
-      <p className="flex flex-wrap items-baseline gap-x-2 text-[0.75rem]">
+      <p className="flex flex-wrap items-baseline gap-x-2 text-[0.8125rem]">
         <span data-numeric className="font-medium text-ink">
           {found.length} of 5 categories
         </span>
@@ -35,7 +35,7 @@ export function CategoryLedger({ ledger, variant = 'row' }) {
             <span className="text-rule" aria-hidden="true">
               |
             </span>
-            <span className="text-graphite">
+            <span className="text-slate">
               nothing found in {missing.map((c) => c.inline).join(', ')}
             </span>
           </>
@@ -51,7 +51,7 @@ export function CategoryLedger({ ledger, variant = 'row' }) {
    * scannable part.
    */
   return (
-    <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[0.75rem]">
+    <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[0.8125rem]">
       <span data-numeric className="font-medium text-ink">
         {found.length} of 5
       </span>
@@ -62,7 +62,7 @@ export function CategoryLedger({ ledger, variant = 'row' }) {
         {ledger.map((category) => (
           <span
             key={category.key}
-            className={category.present ? 'font-medium text-ink' : 'text-rule'}
+            className={category.present ? 'font-medium text-ink' : 'text-slate'}
           >
             {category.label}
           </span>
@@ -83,7 +83,7 @@ export function CategoryLedger({ ledger, variant = 'row' }) {
  *   stats line  - measured, straight from the GitHub API.
  *                 Sans, ink, tabular figures.
  *   summary     - a model's reading of the commit messages.
- *                 Serif, graphite, behind an explicit label.
+ *                 Serif, slate, behind an explicit label.
  *
  * The typography reinforces a distinction the label states outright -
  * it is never asked to carry the meaning on its own.
@@ -94,16 +94,16 @@ function GithubActivity({ raw }) {
 
   return (
     <div className="space-y-2.5">
-      <p data-numeric className="text-[0.875rem] text-ink leading-relaxed">
+      <p className="text-[0.9375rem] text-ink leading-relaxed">
         {activity.stats}
       </p>
 
       {activity.interpretation && (
         <div className="border-t border-rule pt-2.5">
-          <p className="text-[0.75rem] font-medium text-graphite mb-1">
+          <p className="text-[0.8125rem] font-medium text-slate mb-1">
             {activity.interpreted ? 'Commit summary · AI-read' : 'Commit summary'}
           </p>
-          <p className="font-serif text-[0.9375rem] leading-relaxed text-graphite">
+          <p className="font-serif text-[1rem] leading-relaxed text-slate">
             {activity.interpretation}
           </p>
         </div>
@@ -115,13 +115,13 @@ function GithubActivity({ raw }) {
 function CategoryBlock({ label, value, isGithub }) {
   return (
     <section className="border-l-2 border-rule pl-3.5">
-      <h4 className="font-serif text-[0.9375rem] font-semibold text-ink mb-1.5">{label}</h4>
+      <h4 className="font-serif text-[1rem] font-semibold text-ink mb-1.5">{label}</h4>
       {isGithub ? (
         <GithubActivity raw={value} />
       ) : (
         /* Synthesized prose - serif, generous leading, preserving any
            line breaks the report writer produced. */
-        <p className="font-serif text-[0.9375rem] leading-[1.65] text-ink whitespace-pre-line">
+        <p className="font-serif text-[1rem] leading-[1.65] text-ink whitespace-pre-line">
           {value}
         </p>
       )}
@@ -143,7 +143,7 @@ function BriefingCard({ briefing, headingLevel: Heading = 'h3', showHeader = tru
             </Heading>
             <time
               dateTime={briefing.created_at}
-              className="text-[0.75rem] text-graphite shrink-0"
+              className="text-[0.8125rem] text-slate shrink-0"
             >
               {formatDay(briefing.created_at)} · {formatTime(briefing.created_at)}
             </time>
@@ -154,7 +154,7 @@ function BriefingCard({ briefing, headingLevel: Heading = 'h3', showHeader = tru
 
       {withContent.length === 0 ? (
         !showHeader && (
-          <p className="text-[0.875rem] text-graphite">
+          <p className="text-[0.9375rem] text-slate">
             All 5 categories were checked. Nothing found in this run.
           </p>
         )
@@ -171,7 +171,7 @@ function BriefingCard({ briefing, headingLevel: Heading = 'h3', showHeader = tru
         </div>
       )}
 
-      <footer className="text-[0.75rem] text-graphite pt-1">
+      <footer className="text-[0.8125rem] text-slate pt-1">
         <span data-numeric>{briefing.competitor_urls?.length ?? 0}</span>{' '}
         {briefing.competitor_urls?.length === 1 ? 'source page' : 'source pages'} · tracked for{' '}
         {briefing.user_company}

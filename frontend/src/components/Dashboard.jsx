@@ -9,7 +9,7 @@ import { categoryLedger, dayKey, formatDay, formatTime } from '../lib/briefing'
  *
  * History is deliberately NOT the same card as "Latest". Latest is a
  * small number of white panels you read; history is a long archive you
- * scan, so it is flush hairline-separated rows on the paper ground,
+ * scan, so it is flush hairline-separated rows on the canvas ground,
  * grouped under date rules. Same tokens, different structure - that is
  * what carries the hierarchy, rather than one card style repeated at
  * different sizes.
@@ -31,13 +31,13 @@ function HistoryRow({ briefing }) {
           aria-controls={panelId}
           className="w-full text-left py-3 px-2 -mx-2 rounded-control
             flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-4
-            transition-colors duration-150 hover:bg-[#F4F2ED]"
+            transition-colors duration-150 hover:bg-row-hover"
         >
           <span className="flex items-baseline gap-3 shrink-0">
-            <span className="font-serif text-[0.9375rem] font-semibold text-ink">
+            <span className="font-serif text-[1rem] font-semibold text-ink">
               {briefing.competitor_name}
             </span>
-            <time dateTime={briefing.created_at} className="text-[0.75rem] text-graphite">
+            <time data-numeric dateTime={briefing.created_at} className="text-[0.8125rem] text-slate">
               {formatTime(briefing.created_at)}
             </time>
           </span>
@@ -128,10 +128,10 @@ function Dashboard({ token, onUnauthorized, filter, onClearFilter, onTrackNew })
   if (briefings.length === 0) {
     return (
       <Panel className="p-8 max-w-lg">
-        <h2 className="font-serif text-[1.25rem] font-semibold text-ink mb-2">
+        <h2 className="font-serif text-[1.3125rem] font-semibold text-ink mb-2">
           No briefings yet
         </h2>
-        <p className="text-graphite mb-5 leading-relaxed">
+        <p className="text-[0.9375rem] text-slate mb-5 leading-relaxed">
           Add a competitor and the agents will scrape their pages, pull public GitHub
           activity, and file the first briefing here.
         </p>
@@ -150,7 +150,7 @@ function Dashboard({ token, onUnauthorized, filter, onClearFilter, onTrackNew })
           "Latest briefings" heading. */}
       {filter && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-6">
-          <p className="text-[0.8125rem] text-graphite">
+          <p className="text-[0.875rem] text-slate">
             Filtered to <span className="font-medium text-ink">{filter}</span>
           </p>
           <Button variant="quiet" size="sm" onClick={onClearFilter}>
@@ -164,7 +164,7 @@ function Dashboard({ token, onUnauthorized, filter, onClearFilter, onTrackNew })
           <SectionHeading className="mb-1" count={latest.length === 1 ? '1 competitor' : `${latest.length} competitors`}>
             <span id="latest-heading">Latest briefings</span>
           </SectionHeading>
-          <p className="text-[0.8125rem] text-graphite mb-5">
+          <p className="text-[0.875rem] text-slate mb-5">
             The most recent run for each competitor you track.
           </p>
 
@@ -188,7 +188,7 @@ function Dashboard({ token, onUnauthorized, filter, onClearFilter, onTrackNew })
           >
             <span id="history-heading">History</span>
           </SectionHeading>
-          <p className="text-[0.8125rem] text-graphite mb-5">
+          <p className="text-[0.875rem] text-slate mb-5">
             Every run, newest first. Select a briefing to read it in full.
           </p>
 
@@ -196,7 +196,7 @@ function Dashboard({ token, onUnauthorized, filter, onClearFilter, onTrackNew })
             {history.map((group) => (
               <div key={group.key}>
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="text-[0.8125rem] font-medium text-ink shrink-0">
+                  <h3 className="text-[0.875rem] font-medium text-ink shrink-0">
                     {formatDay(group.date)}
                   </h3>
                   <span className="h-px bg-rule flex-1" aria-hidden="true" />

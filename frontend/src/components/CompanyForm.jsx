@@ -42,7 +42,7 @@ function CompanyForm({ onSubmit }) {
         <h1 className="font-serif text-[1.75rem] font-semibold leading-tight text-ink">
           Track a competitor
         </h1>
-        <p className="text-graphite mt-1.5 leading-relaxed">
+        <p className="text-[0.9375rem] text-slate mt-1.5 leading-relaxed">
           Point the agents at the pages worth watching. Blog, pricing and careers
           pages give the strongest signal, since that is where product, pricing and
           hiring changes surface first.
@@ -68,11 +68,11 @@ function CompanyForm({ onSubmit }) {
 
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-[0.8125rem] font-medium text-ink shrink-0">
+            <h2 className="text-[0.875rem] font-medium text-ink shrink-0">
               Competitors
             </h2>
             <span className="h-px bg-rule flex-1" aria-hidden="true" />
-            <span data-numeric className="text-[0.75rem] text-graphite shrink-0">
+            <span data-numeric className="text-[0.8125rem] text-slate shrink-0">
               {competitors.length}
             </span>
           </div>
@@ -82,10 +82,7 @@ function CompanyForm({ onSubmit }) {
               <legend className="sr-only">Competitor {index + 1}</legend>
 
               <div className="flex items-baseline justify-between gap-3 mb-4">
-                <span
-                  data-numeric
-                  className="font-serif text-[0.9375rem] font-semibold text-ink"
-                >
+                <span className="font-serif text-[1rem] font-semibold text-ink">
                   {competitor.name.trim() || `Competitor ${index + 1}`}
                 </span>
                 {competitors.length > 1 && (
@@ -157,7 +154,7 @@ function CompanyForm({ onSubmit }) {
 
         <div className="border-t border-rule pt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
           <Button type="submit">Start tracking</Button>
-          <p className="text-[0.75rem] text-graphite">
+          <p className="text-[0.8125rem] text-slate">
             The first run scrapes every page listed and can take a few minutes.
           </p>
         </div>

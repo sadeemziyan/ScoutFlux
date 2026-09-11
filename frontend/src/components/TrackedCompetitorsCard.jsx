@@ -10,10 +10,10 @@ import { apiFetch } from '../api'
 function GithubMark({ org }) {
   return (
     <span
-      className="inline-flex items-center gap-1 text-[0.6875rem] text-graphite"
+      className="inline-flex items-center gap-1 text-[0.8125rem] text-slate"
       title={`GitHub org tracked: ${org}`}
     >
-      <svg viewBox="0 0 16 16" className="h-3 w-3 fill-current" aria-hidden="true">
+      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-current" aria-hidden="true">
         <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
       </svg>
       {org}
@@ -114,24 +114,24 @@ function TrackedCompetitorsCard({ token, onUnauthorized, selected, onSelect }) {
     <div className="space-y-5">
       <section aria-labelledby="watchlist-heading">
         <div className="flex items-baseline justify-between gap-2 mb-2.5">
-          <h2 id="watchlist-heading" className="text-[0.8125rem] font-medium text-ink">
+          <h2 id="watchlist-heading" className="text-[0.875rem] font-medium text-ink">
             Watchlist
           </h2>
           {status === 'success' && tracked.length > 0 && (
-            <span data-numeric className="text-[0.75rem] text-graphite">
+            <span data-numeric className="text-[0.8125rem] text-slate">
               {tracked.length}
             </span>
           )}
         </div>
 
-        {status === 'loading' && <Note className="text-[0.75rem]">Loading…</Note>}
+        {status === 'loading' && <Note className="text-[0.8125rem]">Loading…</Note>}
         {status === 'error' && (
-          <Note tone="alert" className="text-[0.75rem]">
+          <Note tone="alert" className="text-[0.8125rem]">
             Couldn't load your watchlist.
           </Note>
         )}
         {status === 'success' && tracked.length === 0 && (
-          <Note className="text-[0.75rem] leading-relaxed">
+          <Note className="text-[0.8125rem] leading-relaxed">
             Nothing tracked yet. Add a competitor to start collecting briefings.
           </Note>
         )}
@@ -147,12 +147,12 @@ function TrackedCompetitorsCard({ token, onUnauthorized, selected, onSelect }) {
                 <span
                   aria-hidden="true"
                   className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full
-                    ${isSelected ? 'bg-signal' : 'bg-transparent'}`}
+                    ${isSelected ? 'bg-accent' : 'bg-transparent'}`}
                 />
                 <div
                   className={`flex items-start gap-2 rounded-control pl-3 pr-1.5 py-1.5
                     transition-colors duration-150
-                    ${isSelected ? 'bg-[#F1EEE8]' : 'hover:bg-[#F4F2ED]'}`}
+                    ${isSelected ? 'bg-row-selected' : 'hover:bg-row-hover'}`}
                 >
                   <button
                     type="button"
@@ -160,11 +160,11 @@ function TrackedCompetitorsCard({ token, onUnauthorized, selected, onSelect }) {
                     aria-pressed={isSelected}
                     className="flex-1 min-w-0 text-left"
                   >
-                    <span className="block truncate text-[0.8125rem] font-medium text-ink">
+                    <span className="block truncate text-[0.875rem] font-medium text-ink">
                       {competitor.competitor_name}
                     </span>
                     <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                      <span data-numeric className="text-[0.6875rem] text-graphite">
+                      <span data-numeric className="text-[0.8125rem] text-slate">
                         {competitor.competitor_urls.length}{' '}
                         {competitor.competitor_urls.length === 1 ? 'page' : 'pages'}
                       </span>
@@ -178,12 +178,12 @@ function TrackedCompetitorsCard({ token, onUnauthorized, selected, onSelect }) {
                     disabled={removingId === competitor.id}
                     aria-label={`Stop tracking ${competitor.competitor_name}`}
                     className="shrink-0 mt-0.5 h-5 w-5 inline-flex items-center justify-center
-                      rounded text-graphite opacity-0 group-hover:opacity-100
-                      focus-visible:opacity-100 hover:text-signal
+                      rounded text-slate opacity-0 group-hover:opacity-100
+                      focus-visible:opacity-100 hover:text-accent
                       transition-opacity duration-150 disabled:opacity-45"
                   >
                     {removingId === competitor.id ? (
-                      <span className="text-[0.625rem]">…</span>
+                      <span className="text-[0.75rem]">…</span>
                     ) : (
                       <svg viewBox="0 0 14 14" className="h-3 w-3" aria-hidden="true">
                         <path
@@ -198,7 +198,7 @@ function TrackedCompetitorsCard({ token, onUnauthorized, selected, onSelect }) {
                   </button>
                 </div>
                 {removeError === competitor.id && (
-                  <p className="pl-3 pb-1 text-[0.6875rem] text-signal">
+                  <p className="pl-3 pb-1 text-[0.8125rem] text-accent">
                     Couldn't remove. Try again.
                   </p>
                 )}
@@ -213,10 +213,10 @@ function TrackedCompetitorsCard({ token, onUnauthorized, selected, onSelect }) {
         className="border-t border-rule pt-4 flex items-start justify-between gap-3"
       >
         <div className="min-w-0">
-          <h2 id="digest-heading" className="text-[0.8125rem] font-medium text-ink">
+          <h2 id="digest-heading" className="text-[0.875rem] font-medium text-ink">
             Weekly email digest
           </h2>
-          <p className="text-[0.6875rem] text-graphite leading-snug mt-0.5">
+          <p className="text-[0.8125rem] text-slate leading-snug mt-0.5">
             {digestStatus === 'error'
               ? "Couldn't load this setting."
               : digestEnabled
