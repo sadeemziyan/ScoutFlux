@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { Button, Field, TextInput, Panel } from './ui'
+import { CATEGORIES } from '../lib/briefing'
+import Wordmark from './Wordmark'
 
 function AuthForm({ onAuthSuccess }) {
   const [mode, setMode] = useState('login') // login | signup
@@ -6,6 +9,8 @@ function AuthForm({ onAuthSuccess }) {
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState('idle') // idle | loading | error
   const [errorMessage, setErrorMessage] = useState('')
+
+  const isSignup = mode === 'signup'
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -20,11 +25,9 @@ function AuthForm({ onAuthSuccess }) {
       })
 
       const data = await response.json()
-
       if (!response.ok) {
         throw new Error(data.detail || `Request failed with ${response.status}`)
       }
-
       onAuthSuccess(data.access_token)
     } catch (err) {
       setErrorMessage(err.message)
@@ -33,48 +36,92 @@ function AuthForm({ onAuthSuccess }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-sm mx-auto mt-16 p-6 space-y-4 border border-gray-200 rounded-lg">
-      <h2 className="text-xl font-bold text-gray-900">
-        {mode === 'login' ? 'Log in' : 'Sign up'}
-      </h2>
+    <main className="min-h-dvh flex flex-col items-center justify-center px-5 py-12">
+      <div className="w-full max-w-[24rem]">
+        <div className="mb-7">
+          <Wordmark className="mb-3" />
+          <p className="text-graphite leading-relaxed">
+            Weekly competitive intelligence, assembled automatically from your
+            competitors' public footprint.
+          </p>
+        </div>
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="w-full border border-gray-300 rounded-md px-3 py-2"
-      />
+        <Panel className="p-6">
+          <h1 className="font-serif text-[1.25rem] font-semibold text-ink mb-5">
+            {isSignup ? 'Create an account' : 'Sign in'}
+          </h1>
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        minLength={8}
-        className="w-full border border-gray-300 rounded-md px-3 py-2"
-      />
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate={false}>
+            <Field label="Email" id="auth-email">
+              {(props) => (
+                <TextInput
+                  {...props}
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              )}
+            </Field>
 
-      {status === 'error' && <p className="text-sm text-red-600">{errorMessage}</p>}
+            <Field
+              label="Password"
+              id="auth-password"
+              hint={isSignup ? 'At least 8 characters.' : undefined}
+              error={status === 'error' ? errorMessage : undefined}
+            >
+              {(props) => (
+                <TextInput
+                  {...props}
+                  type="password"
+                  autoComplete={isSignup ? 'new-password' : 'current-password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                />
+              )}
+            </Field>
 
-      <button
-        type="submit"
-        disabled={status === 'loading'}
-        className="w-full bg-blue-600 text-white font-medium py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-      >
-        {status === 'loading' ? 'Please wait...' : mode === 'login' ? 'Log in' : 'Sign up'}
-      </button>
+            <Button type="submit" size="lg" disabled={status === 'loading'}>
+              {status === 'loading'
+                ? 'Working…'
+                : isSignup
+                  ? 'Create account'
+                  : 'Sign in'}
+            </Button>
+          </form>
 
-      <button
-        type="button"
-        onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-        className="text-sm text-blue-600 hover:underline w-full text-center"
-      >
-        {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Log in'}
-      </button>
-    </form>
+          <p className="mt-4 text-[0.8125rem] text-graphite">
+            {isSignup ? 'Already have an account?' : 'No account yet?'}{' '}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(isSignup ? 'login' : 'signup')
+                setStatus('idle')
+                setErrorMessage('')
+              }}
+              className="font-medium text-ink underline underline-offset-2 decoration-edge
+                hover:decoration-ink transition-colors duration-150"
+            >
+              {isSignup ? 'Sign in' : 'Create one'}
+            </button>
+          </p>
+        </Panel>
+
+        {/* The same five categories the briefings are organized around -
+            stated as fact, not sold. */}
+        <div className="mt-6">
+          <p className="text-[0.75rem] text-graphite mb-1.5">Tracked every week</p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[0.75rem] text-ink">
+            {CATEGORIES.map((category) => (
+              <li key={category.key}>{category.label}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </main>
   )
 }
 

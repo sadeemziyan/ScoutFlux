@@ -1,27 +1,29 @@
 import { useState } from 'react'
+import { Button, Field, TextInput, TextArea, Panel } from './ui'
+
+const EMPTY_COMPETITOR = { name: '', urlsText: '', githubOrg: '' }
 
 function CompanyForm({ onSubmit }) {
   const [userCompany, setUserCompany] = useState('')
-  const [competitors, setCompetitors] = useState([{ name: '', urlsText: '', githubOrg: '' }])
+  const [competitors, setCompetitors] = useState([{ ...EMPTY_COMPETITOR }])
 
   function updateCompetitor(index, field, value) {
-    const updated = [...competitors]
-    updated[index] = { ...updated[index], [field]: value }
-    setCompetitors(updated)
+    setCompetitors((prev) =>
+      prev.map((c, i) => (i === index ? { ...c, [field]: value } : c))
+    )
   }
 
   function addCompetitor() {
-    setCompetitors([...competitors, { name: '', urlsText: '', githubOrg: '' }])
+    setCompetitors((prev) => [...prev, { ...EMPTY_COMPETITOR }])
   }
 
   function removeCompetitor(index) {
-    setCompetitors(competitors.filter((_, i) => i !== index))
+    setCompetitors((prev) => prev.filter((_, i) => i !== index))
   }
 
   function handleSubmit(e) {
     e.preventDefault()
-
-    const payload = {
+    onSubmit({
       user_company: userCompany,
       competitors: competitors.map((c) => ({
         name: c.name,
@@ -31,87 +33,136 @@ function CompanyForm({ onSubmit }) {
           .filter((url) => url.length > 0),
         github_org: c.githubOrg.trim() || null,
       })),
-    }
-
-    onSubmit(payload)
+    })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl mx-auto p-6 space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Your company name
-        </label>
-        <input
-          type="text"
-          value={userCompany}
-          onChange={(e) => setUserCompany(e.target.value)}
-          required
-          className="w-full border border-gray-300 rounded-md px-3 py-2"
-        />
-      </div>
+    <div className="max-w-[38rem]">
+      <header className="mb-7">
+        <h1 className="font-serif text-[1.75rem] font-semibold leading-tight text-ink">
+          Track a competitor
+        </h1>
+        <p className="text-graphite mt-1.5 leading-relaxed">
+          Point the agents at the pages worth watching. Blog, pricing and careers
+          pages give the strongest signal, since that is where product, pricing and
+          hiring changes surface first.
+        </p>
+      </header>
 
-      {competitors.map((competitor, index) => (
-        <div key={index} className="border border-gray-200 rounded-md p-4 space-y-3">
-          <div className="flex justify-between items-center">
-            <label className="block text-sm font-medium text-gray-700">
-              Competitor {index + 1}
-            </label>
-            {competitors.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeCompetitor(index)}
-                className="text-sm text-red-600 hover:underline"
-              >
-                Remove
-              </button>
-            )}
+      <form onSubmit={handleSubmit} className="space-y-7">
+        <Field
+          label="Your company"
+          id="user-company"
+          hint="Used to label the briefings filed for you."
+        >
+          {(props) => (
+            <TextInput
+              {...props}
+              type="text"
+              value={userCompany}
+              onChange={(e) => setUserCompany(e.target.value)}
+              required
+            />
+          )}
+        </Field>
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-[0.8125rem] font-medium text-ink shrink-0">
+              Competitors
+            </h2>
+            <span className="h-px bg-rule flex-1" aria-hidden="true" />
+            <span data-numeric className="text-[0.75rem] text-graphite shrink-0">
+              {competitors.length}
+            </span>
           </div>
 
-          <input
-            type="text"
-            placeholder="Competitor name"
-            value={competitor.name}
-            onChange={(e) => updateCompetitor(index, 'name', e.target.value)}
-            required
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
-          />
+          {competitors.map((competitor, index) => (
+            <Panel key={index} as="fieldset" className="p-5">
+              <legend className="sr-only">Competitor {index + 1}</legend>
 
-          <textarea
-            placeholder="One URL per line (blog, pricing, careers, etc.)"
-            value={competitor.urlsText}
-            onChange={(e) => updateCompetitor(index, 'urlsText', e.target.value)}
-            required
-            rows={4}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 font-mono text-sm"
-          />
-          
-          <input
-            type="text"
-            placeholder="GitHub organization or username (optional), e.g. makenotion"
-            value={competitor.githubOrg}
-            onChange={(e) => updateCompetitor(index, 'githubOrg', e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-          />
-          
+              <div className="flex items-baseline justify-between gap-3 mb-4">
+                <span
+                  data-numeric
+                  className="font-serif text-[0.9375rem] font-semibold text-ink"
+                >
+                  {competitor.name.trim() || `Competitor ${index + 1}`}
+                </span>
+                {competitors.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
+                    onClick={() => removeCompetitor(index)}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <Field label="Name" id={`competitor-name-${index}`}>
+                  {(props) => (
+                    <TextInput
+                      {...props}
+                      type="text"
+                      value={competitor.name}
+                      onChange={(e) => updateCompetitor(index, 'name', e.target.value)}
+                      required
+                    />
+                  )}
+                </Field>
+
+                <Field
+                  label="Pages to watch"
+                  id={`competitor-urls-${index}`}
+                  hint="One URL per line."
+                >
+                  {(props) => (
+                    <TextArea
+                      {...props}
+                      rows={4}
+                      value={competitor.urlsText}
+                      onChange={(e) => updateCompetitor(index, 'urlsText', e.target.value)}
+                      required
+                      placeholder={'https://example.com/blog\nhttps://example.com/pricing\nhttps://example.com/careers'}
+                      className={`${props.className} leading-relaxed resize-y`}
+                    />
+                  )}
+                </Field>
+
+                <Field
+                  label="GitHub organization"
+                  id={`competitor-github-${index}`}
+                  hint="Optional. Adds public repository and commit activity to the briefing."
+                >
+                  {(props) => (
+                    <TextInput
+                      {...props}
+                      type="text"
+                      value={competitor.githubOrg}
+                      onChange={(e) => updateCompetitor(index, 'githubOrg', e.target.value)}
+                      placeholder="makenotion"
+                    />
+                  )}
+                </Field>
+              </div>
+            </Panel>
+          ))}
+
+          <Button type="button" variant="secondary" size="sm" onClick={addCompetitor}>
+            Add another competitor
+          </Button>
         </div>
-      ))}
 
-      <button
-        type="button"
-        onClick={addCompetitor}
-        className="text-sm text-blue-600 hover:underline"
-      >
-        + Add another competitor
-      </button>
-
-      <button
-        type="submit"
-        className="w-full bg-blue-600 text-white font-medium py-2 rounded-md hover:bg-blue-700"
-      >
-        Start tracking
-      </button>
-    </form>
+        <div className="border-t border-rule pt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Button type="submit">Start tracking</Button>
+          <p className="text-[0.75rem] text-graphite">
+            The first run scrapes every page listed and can take a few minutes.
+          </p>
+        </div>
+      </form>
+    </div>
   )
 }
 
