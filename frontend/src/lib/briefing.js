@@ -83,3 +83,12 @@ export function formatTime(isoString) {
     minute: '2-digit',
   })
 }
+
+/**
+ * Reading form for a tracked source URL. The protocol is pure noise in
+ * a list of one competitor's own pages, so it is stripped for display
+ * while the link itself keeps the original, unmodified URL.
+ */
+export function displayUrl(url) {
+  return url.replace(/^https?:\/\//, '').replace(/\/+$/, '')
+}

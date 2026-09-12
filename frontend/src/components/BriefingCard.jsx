@@ -1,4 +1,10 @@
-import { categoryLedger, splitGithubActivity, formatDay, formatTime } from '../lib/briefing'
+import {
+  categoryLedger,
+  splitGithubActivity,
+  formatDay,
+  formatTime,
+  displayUrl,
+} from '../lib/briefing'
 
 /**
  * The five-slot ledger. Found categories are ink and medium-weight;
@@ -129,9 +135,23 @@ function CategoryBlock({ label, value, isGithub }) {
   )
 }
 
-function BriefingCard({ briefing, headingLevel: Heading = 'h3', showHeader = true }) {
+/**
+ * `showSources` lists the competitor's tracked pages in the footer.
+ * It is on for the "Latest briefings" card and off in History: the same
+ * URL set repeats on every run for a competitor, so printing it once
+ * per historical entry would be the same list stacked N times for no
+ * added information.
+ */
+function BriefingCard({
+  briefing,
+  headingLevel: Heading = 'h3',
+  showHeader = true,
+  showSources = true,
+}) {
   const ledger = categoryLedger(briefing)
   const withContent = ledger.filter((c) => c.present)
+  const sources = briefing.competitor_urls ?? []
+  const listSources = showSources && sources.length > 0
 
   return (
     <article className="space-y-4">
@@ -171,10 +191,47 @@ function BriefingCard({ briefing, headingLevel: Heading = 'h3', showHeader = tru
         </div>
       )}
 
-      <footer className="text-[0.8125rem] text-slate pt-1">
-        <span data-numeric>{briefing.competitor_urls?.length ?? 0}</span>{' '}
-        {briefing.competitor_urls?.length === 1 ? 'source page' : 'source pages'} · tracked for{' '}
-        {briefing.user_company}
+      <footer
+        className={
+          listSources
+            ? 'border-t border-rule pt-3 mt-1 space-y-1.5'
+            : 'text-[0.8125rem] text-slate pt-1'
+        }
+      >
+        {listSources ? (
+          <>
+            {/* The count is dropped here - the list below it IS the
+                count, and restating it would be the same information
+                twice. History keeps the count precisely because it has
+                no list. */}
+            <p className="text-[0.8125rem] text-slate">
+              Sources · tracked for {briefing.user_company}
+            </p>
+            <ul className="space-y-1">
+              {sources.map((url) => (
+                <li key={url}>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    title={url}
+                    className="text-[0.8125rem] text-slate hover:text-ink break-all
+                      underline underline-offset-2 decoration-rule hover:decoration-edge
+                      transition-colors duration-150"
+                  >
+                    {displayUrl(url)}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <>
+            <span data-numeric>{sources.length}</span>{' '}
+            {sources.length === 1 ? 'source page' : 'source pages'} · tracked for{' '}
+            {briefing.user_company}
+          </>
+        )}
       </footer>
     </article>
   )

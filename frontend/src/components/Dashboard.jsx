@@ -50,7 +50,7 @@ function HistoryRow({ briefing }) {
       <div id={panelId} className="sf-expand" data-open={open} role="region">
         <div>
           <div className="pb-5 pt-1 pl-2 pr-2">
-            <BriefingCard briefing={briefing} showHeader={false} />
+            <BriefingCard briefing={briefing} showHeader={false} showSources={false} />
           </div>
         </div>
       </div>
