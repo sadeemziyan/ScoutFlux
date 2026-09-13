@@ -21,7 +21,7 @@ function GithubMark({ org }) {
   )
 }
 
-function TrackedCompetitorsCard({ token, onUnauthorized, selected, onSelect }) {
+function TrackedCompetitorsCard({ token, onUnauthorized, refreshKey, selected, onSelect }) {
   const [tracked, setTracked] = useState([])
   const [status, setStatus] = useState('loading')
   const [removingId, setRemovingId] = useState(null)
@@ -68,7 +68,7 @@ function TrackedCompetitorsCard({ token, onUnauthorized, selected, onSelect }) {
     return () => {
       cancelled = true
     }
-  }, [token, onUnauthorized])
+  }, [token, onUnauthorized, refreshKey])
 
   async function handleToggleDigest() {
     const nextValue = !digestEnabled

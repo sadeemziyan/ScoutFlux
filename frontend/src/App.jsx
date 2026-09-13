@@ -58,6 +58,9 @@ function App() {
   const [errorMessage, setErrorMessage] = useState('')
   const [filter, setFilter] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  // Bumped after a successful track so the sidebar watchlist, which
+  // stays mounted across views, knows to refetch.
+  const [refreshKey, setRefreshKey] = useState(0)
 
   function handleAuthSuccess(newToken) {
     localStorage.setItem('token', newToken)
@@ -106,6 +109,7 @@ function App() {
       if (!response.ok) throw new Error(`Server responded with ${response.status}`)
 
       await response.json()
+      setRefreshKey((k) => k + 1)
       setSubmitStatus('idle')
       setView('dashboard')
     } catch (err) {
@@ -155,6 +159,7 @@ function App() {
           <TrackedCompetitorsCard
             token={token}
             onUnauthorized={handleLogout}
+            refreshKey={refreshKey}
             selected={filter}
             onSelect={(name) => {
               setFilter(name)
