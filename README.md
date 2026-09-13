@@ -32,13 +32,21 @@ automatically, every week, with zero manual triggering after setup.
 
 ## Screenshots
 
-| Dashboard | GitHub Activity Panel |
-|---|---|
-| ![Dashboard]() | ![GitHub Activity]() |
+**Tracking a competitor:**
 
-| Watchlist | Weekly Digest Email |
-|---|---|
-| ![Watchlist]() | ![Digest Email]() |
+![Track a competitor](docs/screenshots/Track.png)
+
+**A real briefing, generated from actual scraped pages and live GitHub data:**
+
+![Latest briefings](docs/screenshots/Briefings.png)
+
+**History across multiple real runs over several days:**
+
+![Briefing history](docs/screenshots/BriefingsHistory.png)
+
+**The same briefing, delivered as a weekly email digest:**
+
+![Weekly digest email](docs/screenshots/Email.png)
 
 ---
 
