@@ -1,1 +1,115 @@
 @import "tailwindcss";
+
+/* ScoutFlux design tokens.
+   A cool slate/navy ground with a single aged-brass marker. The accent
+   is deliberately the opposite temperature from everything else in the
+   app - on a cool ground the reflexive choices are blue or emerald, and
+   both read as stock dashboard chrome. Brass stays legible at the
+   hairline scale it is actually used at, and never dissolves into the
+   slate.
+
+   Every contrast pair below was computed, not eyeballed:
+     ink     16.89:1 on canvas   (AAA text)
+     slate    5.84:1 on canvas   (AA text)
+     accent   4.72:1 on canvas   (AA text)
+     accent   3.58:1 on ink      (AA non-text - the focus ring on a
+                                  filled primary button)
+     edge     3.39:1 on canvas   (AA non-text - control borders)
+   `rule` is 1.16:1 and is therefore decorative ONLY - it must never be
+   the sole indicator of an interactive control's boundary. */
+@theme {
+  --color-canvas: #F6F8FA;
+  --color-surface: #FFFFFF;
+  --color-ink: #101722;
+  --color-slate: #55617A;
+  --color-rule: #E3E8EF;
+  --color-edge: #7B8899;
+  --color-accent: #8A6A2F;
+
+  /* Interaction states, kept as tokens so no magic hex values end up
+     scattered across components. */
+  --color-ink-hover: #1E2A3A;
+  --color-row-hover: #EEF2F7;
+  --color-row-selected: #E8EEF6;
+  --color-field-hover: #EDF1F6;
+  --color-placeholder: #8B97AB;
+
+  /* Sans carries measured data, serif carries synthesized prose.
+     See BriefingCard - this split is semantic, not decorative. */
+  --font-sans: "Schibsted Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Spectral", ui-serif, Georgia, "Times New Roman", serif;
+
+  --radius-control: 4px;
+  --radius-panel: 6px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Counts and figures that stack in a column must not reflow as their
+     digits change - this is why the app needs no monospace font.
+
+     Apply data-numeric ONLY to bare numerals. Schibsted Grotesk's tnum
+     feature also substitutes tabular-width comma and period (so that
+     1,234.56 aligns), which inside a sentence renders as a visible gap
+     before every comma and full stop. Prose containing numbers must
+     therefore be left alone. */
+  :where([data-numeric]) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* One consistent, high-visibility focus treatment for every
+     interactive element. Brass is the only warm colour in the app, so
+     it reads unambiguously against both the canvas and the navy fill
+     of a primary button. */
+  :where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background-color: #D9E4F2;
+    color: var(--color-ink);
+  }
+}
+
+/* The app's single motion moment: a history row expanding into a full
+   briefing. Grid-template-rows 0fr->1fr animates to auto height
+   without measuring anything in JS. */
+@layer components {
+  .sf-expand {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 220ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  .sf-expand[data-open="true"] {
+    grid-template-rows: 1fr;
+  }
+  .sf-expand > * {
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
