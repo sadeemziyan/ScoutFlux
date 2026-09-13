@@ -8,7 +8,7 @@ Point it at your competitors' public pages and GitHub orgs. It scrapes, analyzes
 product, hiring, pricing, tech-stack, and open-source signals into a weekly briefing,
 automatically, every week, with zero manual triggering after setup.
 
-[**Live App**](https://scoutflux.vercel.app) · [**API**](https://scoutflux-backend.onrender.com/health) · [**Repo**](https://github.com/sadeemziyan/ScoutFlux)
+[**Live App**](https://scoutflux.vercel.app) · [**Repo**](https://github.com/sadeemziyan/ScoutFlux)
 
 </div>
 
@@ -319,6 +319,6 @@ MIT
 
 <div align="center">
 
-Built by [Sadeem](https://github.com/sadeemziyan), CS undergrad, UT Dallas.
+Built by [Sadeem Ziyan](https://github.com/sadeemziyan), CS sophomore, UT Dallas.
 
 </div>
