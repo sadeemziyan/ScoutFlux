@@ -221,7 +221,7 @@ function TrackedCompetitorsCard({ token, onUnauthorized, refreshKey, selected, o
               ? "Couldn't load this setting."
               : digestEnabled
                 ? 'Sent every Monday morning.'
-                : 'Off — read briefings here only.'}
+                : 'Off - read briefings here only.'}
           </p>
         </div>
         <Switch
