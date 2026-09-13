@@ -10,6 +10,8 @@ automatically, every week, with zero manual triggering after setup.
 
 [**Live App**](https://scoutflux.vercel.app) · [**Repo**](https://github.com/sadeemziyan/ScoutFlux)
 
+🔗 https://scoutflux.vercel.app
+
 </div>
 
 ---
