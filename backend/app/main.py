@@ -29,8 +29,7 @@ async def lifespan(app: FastAPI):
     # Runs once, when the app starts up
     scheduler.add_job(
         run_weekly_pipeline_for_all_users,
-        trigger=CronTrigger(day_of_week="sun", hour=0, minute=0),
-        id="weekly_pipeline",
+        trigger=CronTrigger(day_of_week="mon", hour=8, minute=0, timezone="America/Chicago"),        id="weekly_pipeline",
         replace_existing=True,
     )
     scheduler.start()
